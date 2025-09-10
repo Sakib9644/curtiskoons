@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Notifications\RegistrationNotification;
 use Illuminate\Support\Facades\DB;
 use App\Traits\SMS;
+use Spatie\Permission\Models\Role;
 
 class RegisterController extends Controller
 {
@@ -28,80 +29,81 @@ class RegisterController extends Controller
         $this->select = ['id', 'name', 'email', 'otp', 'avatar', 'otp_verified_at', 'last_activity_at'];
     }
 
-    public function register(Request $request)
-    {
-        $request->validate([
-            'name'       => 'required|string|max:100',
-            'email'      => 'required|string|email|max:150|unique:users',
-            'password'   => 'required|string|min:6|confirmed',
-            'role'       => 'required|exists:roles,id',
-            'agree'      => 'required|in:true',
+  public function register(Request $request)
+{
+    $request->validate([
+        'name'       => 'required|string|max:100',
+        'email'      => 'required|string|email|max:150|unique:users',
+        'password'   => 'required|string|min:6|confirmed',
+    ]);
+
+    try {
+        DB::beginTransaction();
+
+        // Generate unique slug
+        do {
+            $slug = "user_" . rand(1000000000, 9999999999);
+        } while (User::where('slug', $slug)->exists());
+
+        // Create user
+        $user = User::create([
+            'name'               => $request->input('name'),
+            'slug'               => $slug,
+            'email'              => strtolower($request->input('email')),
+            'password'           => Hash::make($request->input('password')),
+            'otp'                => rand(1000, 9999),
+            'otp_expires_at'     => Carbon::now()->addMinutes(60),
+            'status'             => 'active',
+            'last_activity_at'   => Carbon::now()
         ]);
-        try {
-            DB::beginTransaction();
-            do {
-                $slug = "user_".rand(1000000000, 9999999999);
-            } while (User::where('slug', $slug)->exists());
 
-            $user = User::create([
-                'name'               => $request->input('name'),
-                'slug'               => $slug,
-                'email'              => strtolower($request->input('email')),
-                'password'           => Hash::make($request->input('password')),
-                'otp'                => rand(1000, 9999),
-                'otp_expires_at'     => Carbon::now()->addMinutes(60),
-                'status'             => 'active',
-                'last_activity_at'   => Carbon::now()
-            ]);
-
-            DB::table('model_has_roles')->insert([
-                'role_id' => $request->input('role'),
-                'model_type' => 'App\Models\User',
-                'model_id' => $user->id
-            ]);
-
-            //notify to admin start
-            $notiData = [
-                'user_id' => $user->id,
-                'title' => 'User register in successfully.',
-                'body' => 'User register in successfully.'
-            ];
-
-            $admins = User::role('admin', 'web')->get();
-            foreach($admins as $admin){
-                $admin->notify(new RegistrationNotification($notiData));
-                if(config('settings.reverb')  === 'on'){
-                    broadcast(new RegistrationNotificationEvent($notiData, $admin->id))->toOthers();
-                }
-            }
-            //notify to admin end
-
-            //$this->twilioSms($phone, 'this sms for testing.');
-            //$this->bdSms($phone, 'this sms for testing. thard sms');
-
-            $data = User::select($this->select)->with('roles')->find($user->id);
-
-            Mail::to($user->email)->send(new OtpMail($user->otp, $user, 'Verify Your Email Address'));
-
-            DB::commit();
-
-            $token = auth('api')->login($user);
-
-            return response()->json([
-                'status'     => true,
-                'message'    => 'User register in successfully.',
-                'code'       => 200,
-                'token_type' => 'bearer',
-                'token'      => $token,
-                'expires_in' => auth('api')->factory()->getTTL() * 60,
-                'data' => $data
-            ], 200);
-            
-        } catch (Exception $e) {
-            DB::rollBack();
-            return Helper::jsonErrorResponse('User registration failed', 500, [$e->getMessage()]);
+        // Assign default role 'user'
+        $userRole = Role::where('name', 'user')->first();
+        if ($userRole) {
+            $user->assignRole($userRole);
         }
+
+        // Notify admins
+        $notiData = [
+            'user_id' => $user->id,
+            'title' => 'User registered successfully.',
+            'body' => 'A new user has registered.'
+        ];
+
+        $admins = User::role('admin', 'api')->get();
+        foreach ($admins as $admin) {
+            $admin->notify(new RegistrationNotification($notiData));
+            if (config('settings.reverb') === 'on') {
+                broadcast(new RegistrationNotificationEvent($notiData, $admin->id))->toOthers();
+            }
+        }
+
+        // Send OTP email
+        Mail::to($user->email)->send(new OtpMail($user->otp, $user, 'Verify Your Email Address'));
+
+        DB::commit();
+
+        // Generate API token
+        $token = auth('api')->login($user);
+
+        $data = User::select($this->select)->find($user->id);
+
+        return response()->json([
+            'status'     => true,
+            'message'    => 'User registered successfully.',
+            'code'       => 200,
+            'token_type' => 'bearer',
+            'token'      => $token,
+            'expires_in' => auth('api')->factory()->getTTL() * 60,
+            'data'       => $data
+        ], 200);
+
+    } catch (Exception $e) {
+        DB::rollBack();
+        return Helper::jsonErrorResponse('User registration failed', 500, [$e->getMessage()]);
     }
+}
+
     public function VerifyEmail(Request $request)
     {
         $request->validate([

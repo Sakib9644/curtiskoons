@@ -15,7 +15,7 @@ class User extends Authenticatable implements JWTSubject
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, HasRoles, SoftDeletes;
 
-    protected $guard_name = ['api', 'web'];
+    protected $guard_name = ['api'];
 
     public function getJWTIdentifier()
     {
@@ -52,11 +52,11 @@ class User extends Authenticatable implements JWTSubject
         'remember_token',
     ];
 
-    protected $appends = [
-        'role',
-        'is_online',
-        'balance'
-    ];
+    // protected $appends = [
+    //     'role',
+    //     'is_online',
+    //     'balance'
+    // ];
 
     /**
      * Get the attributes that should be cast.
@@ -98,10 +98,10 @@ class User extends Authenticatable implements JWTSubject
         return $increment - $decrement;
     }
 
-    public function getRoleAttribute()
-    {
-        return  $this->getRoleNames()->first();
-    }
+    // public function getRoleAttribute()
+    // {
+    //     return  $this->getRoleNames()->first();
+    // }
 
     public function firebaseTokens()
     {
@@ -153,5 +153,5 @@ class User extends Authenticatable implements JWTSubject
     {
         return Room::where('user_one_id', $this->id)->orWhere('user_two_id', $this->id);
     }
-    
+
 }

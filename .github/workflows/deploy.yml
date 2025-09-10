@@ -15,5 +15,5 @@ jobs:
         uses: SamKirkland/FTP-Deploy-Action@4.3.0
         with:
           server: ftp.softvencefsd.xyz
-          username: softvencefsd@stackmaster.softvencefsd.xyz
-          password: "C!@d96ZRz[O!"
+          username: curtiskoons@softvencefsd.xyz
+          password: "by^FZ(k{2B%2U*kM"

@@ -138,9 +138,6 @@ Route::prefix('spike')->name('spike.')->group(function () {
     // OAuth callback handler (GET /api/spike/callback?code=abc&provider=garmin)
     Route::get('/integrate/{provider}', [SpikeController::class, 'integrateProvider']);
 
-    // Fetch provider data (GET /api/spike/provider-data?provider=fitbit&start_date=2025-10-01&end_date=2025-10-18)
-    Route::get('provider-data', [SpikeController::class, 'fetchProviderData']);
+    Route::get('/callback', [SpikeController::class, 'providerCallback'])->name('spike.callback');
 
-    // Connect and fetch initial stats (GET /api/spike/connect-fetch)
-    Route::get('connect-fetch', [SpikeController::class, 'connectAndFetch']);
 });

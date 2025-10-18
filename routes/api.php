@@ -19,7 +19,7 @@ use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\Frontend\SettingsController;
 use App\Http\Controllers\Api\Frontend\SocialLinksController;
 use App\Http\Controllers\Api\Frontend\SubscriberController;
-
+use App\Http\Controllers\SpikeController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -131,3 +131,17 @@ Route::middleware(['auth:api'])->controller(ChatController::class)->prefix('auth
 Route::prefix('cms')->name('cms.')->group(function () {
     Route::get('home', [HomeController::class, 'index'])->name('home');
 });
+Route::prefix('spike')->name('spike.')->group(function () {
+
+    Route::post('connect', [SpikeController::class, 'initiateProviderConnection'])->name('spike.connect');
+
+    // OAuth callback handler (GET /api/spike/callback?code=abc&provider=garmin)
+    Route::get('callback', [SpikeController::class, 'providerCallback'])->name('callback');
+
+    // Fetch provider data (GET /api/spike/provider-data?provider=fitbit&start_date=2025-10-01&end_date=2025-10-18)
+    Route::get('provider-data', [SpikeController::class, 'fetchProviderData']);
+
+    // Connect and fetch initial stats (GET /api/spike/connect-fetch)
+    Route::get('connect-fetch', [SpikeController::class, 'connectAndFetch']);
+});
+

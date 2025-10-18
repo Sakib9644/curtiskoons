@@ -51,20 +51,18 @@ class SpikeService
             'Content-Type' => 'application/json',
         ])->post($this->baseUrl . '/auth/hmac', $payload);
 
-        $json = $response->json();  // Decode JSON body
-
         Log::debug('Spike Auth Response', [
             'status' => $response->status(),
-            'body' => $json
+            'body' => $response->body()
         ]);
 
-        if ($response->successful() && isset($json['access_token'])) {
-            return $json['access_token'];
+        if ($response->successful() && isset($response['access_token'])) {
+            return $response['access_token'];
         }
 
         Log::error('Spike HMAC Auth failed', [
             'status' => $response->status(),
-            'body' => $json,
+            'body' => $response->body(),
             'userId' => $userId,
             'signature' => $signature
         ]);
@@ -90,21 +88,19 @@ class SpikeService
             'Accept' => 'application/json'
         ])->get($url, $query);
 
-        $json = $response->json();  // Decode JSON body
-
         Log::debug('Spike Provider Integration URL Response', [
             'status' => $response->status(),
-            'body' => $json
+            'body' => $response->body()
         ]);
 
-        if ($response->successful() && isset($json['path'])) {
-            return $json['path'];
+        if ($response->successful() && isset($response['path'])) {
+            return $response['path'];
         }
 
         return null;
     }
 
-    public function confirmProviderConnection(string $accessToken, string $provider, ?string $code = null, ?string $state = null): array
+  public function confirmProviderConnection(string $accessToken, string $provider, ?string $code = null, ?string $state = null): array
     {
         $payload = [];
         if ($code) $payload['code'] = $code;
@@ -117,21 +113,19 @@ class SpikeService
             'Accept' => 'application/json'
         ])->post($url, $payload);
 
-        $json = $response->json();  // Decode for consistency, though not strictly needed here
-
         Log::debug('Spike Confirm Provider Response', [
             'status' => $response->status(),
-            'body' => $json
+            'body' => $response->body()
         ]);
 
         if ($response->successful()) {
-            return $json;
+            return $response->json();
         }
 
         return [
             'error' => 'Failed to confirm provider connection',
             'status' => $response->status(),
-            'body' => $json
+            'body' => $response->body()
         ];
     }
 }

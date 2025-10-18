@@ -43,6 +43,6 @@ return [
     'spike' => [
         'app_id' => env('SPIKE_APP_ID'),
         'hmac_secret' => env('SPIKE_HMAC_SECRET'),
-        'base_url' => env('SPIKE_BASE_URL', 'https://app-api.spikeapi.com/v3'),
+        'base_url' => env('SPIKE_BASE_URL', 'https://app.spikeapi.com/v3'),
     ],
 ];

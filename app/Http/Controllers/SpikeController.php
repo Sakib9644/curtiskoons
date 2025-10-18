@@ -2,87 +2,78 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Services\SpikeAuthService;
-use Illuminate\Support\Facades\Auth;
+use App\Services\SpikeService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class SpikeController extends Controller
 {
-    protected $spike;
+    protected $spikeAuth;
 
-    public function __construct(SpikeAuthService $spike)
+    public function __construct(SpikeService $spikeAuth)
     {
-        $this->spike = $spike; // SpikeAuthService injected
+        $this->spikeAuth = $spikeAuth;
     }
 
     /**
-     * Step 1: Authenticate user with Spike and get Spike access token
+     * Authenticate logged-in user and get Spike access token
      */
-    public function authenticateUser(Request $request)
-    {
-        $user = auth('api')->user();
-        if (!$user) {
-            return response()->json(['error' => 'User not logged in'], 401);
-        }
-
-        $userId = (string) $user->id;
-        $token = $this->spike->getAccessToken($userId);
-
-        if (!$token) {
-            return response()->json(['error' => 'Failed to authenticate user'], 401);
-        }
-
-        // Save Spike token in users table
-        $user->spike_token = $token;
-        $user->save();
-
-        return response()->json([
-            'user_id' => $userId,
-            'access_token' => $token
-        ]);
+  public function authenticateUser(Request $request)
+{
+    $user = auth('api')->user();
+    if (!$user) {
+        return response()->json(['error' => 'User not logged in'], 401);
     }
 
-    /**
-     * Step 2: Generate provider integration URL
-     * API returns the URL for the client to open in browser or WebView
-     */
-    public function integrateProvider(Request $request, $provider)
-    {
-        $user = auth('api')->user();
-        if (!$user || !$user->spike_token) {
-            return response()->json(['error' => 'User not authenticated with Spike'], 401);
-        }
+    $userId = (string) $user->id;
+    $token = $this->spikeAuth->getAccessToken($userId);
 
-        if (!$provider) {
-            return response()->json(['error' => 'Provider slug is required'], 400);
-        }
-
-        $redirectUri = $request->input('redirect_uri'); // optional
-        $state = $request->input('state');             // optional
-
-        $integrationUrl = $this->spike->getProviderIntegrationUrl(
-            $user->spike_token,
-            $provider,
-            $redirectUri,
-            $state
-        );
-
-        if (!$integrationUrl) {
-            return response()->json(['error' => 'Failed to get integration URL'], 500);
-        }
-
-        return response()->json([
-            'provider' => $provider,
-            'integration_url' => $integrationUrl
-        ]);
+    if (!$token) {
+        return response()->json(['error' => 'Failed to authenticate user'], 401);
     }
 
-    /**
-     * Step 3: Handle callback from provider after user authorizes
-     * Stores provider connection in user_providers table
-     */
-    public function providerCallback(Request $request)
+    // Save the token in the existing column
+    $user->spike_token = $token;
+    $user->save();
+
+    return response()->json([
+        'user_id' => $userId,
+        'access_token' => $token
+    ]);
+}
+public function integrateProvider(Request $request, $provider)
+{
+    $user = auth('api')->user();
+    if (!$user || !$user->spike_token) {
+        return response()->json(['error' => 'User not authenticated with Spike'], 401);
+    }
+
+    if (!$provider) {
+        return response()->json(['error' => 'Provider slug is required'], 400);
+    }
+
+    $redirectUri = $request->input('redirect_uri'); // optional
+    $state = $request->input('state');             // optional
+
+    $integrationUrl = $this->spikeAuth->getProviderIntegrationUrl(
+        $user->spike_token,
+        $provider,
+        $redirectUri,
+        $state
+    );
+
+    if (!$integrationUrl) {
+        return response()->json(['error' => 'Failed to get integration URL'], 500);
+    }
+
+    // Return the URL in JSON for API clients
+    return response()->json([
+        'provider' => $provider,
+        'integration_url' => $integrationUrl
+    ]);
+}
+ public function providerCallback(Request $request)
     {
         $userId = $request->query('user_id');
         $provider = $request->query('provider_slug');
@@ -99,7 +90,7 @@ class SpikeController extends Controller
         }
 
         // Confirm provider connection with Spike
-        $result = $this->spike->confirmProviderConnection(
+        $result = $this->spikeAuth->confirmProviderConnection(
             $user->spike_token,
             $provider,
             $code,
@@ -126,4 +117,9 @@ class SpikeController extends Controller
             'data' => $result
         ]);
     }
+
 }
+
+
+
+

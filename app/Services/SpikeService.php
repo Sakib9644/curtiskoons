@@ -81,7 +81,7 @@ class SpikeService
         if ($state) $query['state'] = $state;
         if ($providerUserId) $query['provider_user_id'] = $providerUserId;
 
-        $url = $this->baseUrl . "/providers/{$provider}/integration/init";
+        $url = $this->baseUrl . "/providers/{$provider}/integration/init_url";
 
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . $accessToken,
@@ -94,31 +94,24 @@ class SpikeService
         ]);
 
         if ($response->successful() && isset($response['path'])) {
-            // Extract integration code (ic/...)
-            preg_match('/(ic\/[^?]+)/', $response['path'], $matches);
-            $integrationCode = $matches[1] ?? null;
-
-            if ($integrationCode) {
-                // Store code in cache for 10 minutes
-                cache()->put("spike_integration_code_{$provider}_{$accessToken}", $integrationCode, now()->addMinutes(10));
-            }
-
             return $response['path'];
         }
 
         return null;
     }
 
-    public function confirmProviderConnection(string $accessToken, string $provider, string $integrationCode): array
+  public function confirmProviderConnection(string $accessToken, string $provider, ?string $code = null, ?string $state = null): array
     {
+        $payload = [];
+        if ($code) $payload['code'] = $code;
+        if ($state) $payload['state'] = $state;
+
         $url = $this->baseUrl . "/providers/{$provider}/integration/confirm";
 
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . $accessToken,
             'Accept' => 'application/json'
-        ])->post($url, [
-            'integration_code' => $integrationCode
-        ]);
+        ])->post($url, $payload);
 
         Log::debug('Spike Confirm Provider Response', [
             'status' => $response->status(),

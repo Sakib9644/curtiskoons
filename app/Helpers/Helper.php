@@ -48,7 +48,7 @@ class Helper
     }
 
     //! JSON Response
-    public static function jsonResponse(bool $status, string $message, int $code, $data = null, bool $paginate = false, $paginateData = null): JsonResponse
+    public static function jsonResponse(bool $status, string $message, int $code, $data = null, bool $paginate = false, $paginateData = null, $token = null): JsonResponse
     {
         $response = [
             'status'  => $status,
@@ -87,6 +87,8 @@ class Helper
             ];
         } elseif ($data !== null) {
             $response['data'] = $data;
+        } elseif ($token !== null) {
+            $response['token'] = $token;
         }
 
         return response()->json($response, $code);

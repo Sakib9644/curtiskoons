@@ -17,73 +17,75 @@ class LoginController extends Controller
     public function __construct()
     {
         parent::__construct();
-        $this->select = ['id', 'name', 'email', 'avatar', 'otp_verified_at', 'last_activity_at'];   
+        $this->select = ['id', 'name', 'email', 'avatar', 'otp_verified_at', 'last_activity_at'];
     }
 
-    public function Login(Request $request)
-    {
-        try {
-            $validator = Validator::make($request->all(), [
-                'email'    => 'required|email|exists:users,email',
-                'password' => 'required|string|min:6',
-            ]);
+   public function Login(Request $request)
+{
+    try {
+        $validator = Validator::make($request->all(), [
+            'login'    => 'required|string', // username or email
+            'password' => 'required|string|min:6',
+        ]);
 
-            if ($validator->fails()) {
-                return Helper::jsonResponse(false, 'Validation failed', 422, $validator->errors());
-            }
-
-            $user = User::where('email', $request->email);
-
-            if (!$user) {
-                return Helper::jsonResponse(false, 'User not found', 404);
-            }
-
-            $user = $user->where('status', 'active')->first();
-
-            if (!$user) {
-                return Helper::jsonResponse(false, 'user is not active', 404);
-            }
-
-            //! Check the password
-            if (!Hash::check($request->password, $user->password)) {
-                return Helper::jsonResponse(false, 'Invalid password', 401);
-            }
-            
-            //? Check if the email is verified before login is successful
-            if (!$user->otp_verified_at) {
-                return Helper::jsonResponse(false, 'Email not verified. Please verify your email before logging in.', 403, ['is_otp_verified' => $user->isOtpVerified]);
-            }else{
-                $user->update([
-                    'otp'            => null,
-                    'otp_expires_at' => null,
-                    'reset_password_token' => null,
-                    'reset_password_token_expire_at' => null
-                ]);
-            }
-
-            $user->update([
-                'last_activity_at' => now(),
-            ]);
-
-            //* Generate token if email is verified
-            $token = auth('api')->login($user);
-
-            $data = User::select($this->select)->with('roles')->find(auth('api')->user()->id);
-
-            return response()->json([
-                'status'     => true,
-                'message'    => 'Login successful',
-                'code'       => 200,
-                'token_type' => 'bearer',
-                'token'      => $token,
-                'expires_in' => auth('api')->factory()->getTTL() * 60,
-                'data'       => $data,
-            ], 200);
-
-        } catch (Exception $e) {
-            return Helper::jsonResponse(false, 'An error occurred during login.', 500, ['error' => $e->getMessage()]);
+        if ($validator->fails()) {
+            return Helper::jsonResponse(false, 'Validation failed', 422, $validator->errors());
         }
+
+        // Find user by email or username
+        $user = User::where('email', $request->login)
+                    ->orWhere('name', $request->login)
+                    ->first();
+
+        if (!$user) {
+            return Helper::jsonResponse(false, 'User not found', 404);
+        }
+
+        if ($user->status !== 'active') {
+            return Helper::jsonResponse(false, 'User is not active', 403);
+        }
+
+        // Check the password
+        if (!Hash::check($request->password, $user->password)) {
+            return Helper::jsonResponse(false, 'Invalid password', 401);
+        }
+
+        // Check if email is verified
+        if (!$user->otp_verified_at) {
+            return Helper::jsonResponse(false, 'Email not verified. Please verify your email before logging in.', 403, ['is_otp_verified' => $user->isOtpVerified]);
+        } else {
+            $user->update([
+                'otp' => null,
+                'otp_expires_at' => null,
+                'reset_password_token' => null,
+                'reset_password_token_expire_at' => null
+            ]);
+        }
+
+        $user->update([
+            'last_activity_at' => now(),
+        ]);
+
+        // Generate token
+        $token = auth('api')->login($user);
+
+        $data = User::select($this->select)->find(auth('api')->user()->id);
+
+        return response()->json([
+            'status'     => true,
+            'message'    => 'Login successful',
+            'code'       => 200,
+            'token_type' => 'bearer',
+            'token'      => $token,
+            'expires_in' => auth('api')->factory()->getTTL() * 60,
+            'data'       => $data,
+        ], 200);
+
+    } catch (Exception $e) {
+        return Helper::jsonResponse(false, 'An error occurred during login.', 500, ['error' => $e->getMessage()]);
     }
+}
+
 
     public function refreshToken()
     {

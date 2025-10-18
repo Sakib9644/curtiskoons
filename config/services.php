@@ -34,11 +34,15 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
-    
+
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
         'redirect' => env('GOOGLE_REDIRECT_URI'),
-    ]
-
+    ],
+    'spike' => [
+        'app_id' => env('SPIKE_APP_ID'),
+        'hmac_secret' => env('SPIKE_HMAC_SECRET'),
+        'base_url' => env('SPIKE_BASE_URL', 'https://app-api.spikeapi.com/v3'),
+    ],
 ];

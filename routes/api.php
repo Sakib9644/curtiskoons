@@ -133,11 +133,9 @@ Route::prefix('cms')->name('cms.')->group(function () {
 });
 Route::prefix('spike')->name('spike.')->group(function () {
 
-    Route::post('/authenticate', [SpikeController::class, 'authenticateUser']);
+    Route::get('/authenticate', [SpikeController::class, 'authenticateUser']);
 
-    // OAuth callback handler (GET /api/spike/callback?code=abc&provider=garmin)
     Route::get('/integrate/{provider}', [SpikeController::class, 'integrateProvider']);
 
-    Route::get('/callback', [SpikeController::class, 'providerCallback'])->name('spike.callback');
 
 });

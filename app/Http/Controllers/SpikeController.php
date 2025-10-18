@@ -21,6 +21,7 @@ class SpikeController extends Controller
      */
   public function authenticateUser(Request $request)
 {
+
     $user = auth('api')->user();
     if (!$user) {
         return response()->json(['error' => 'User not logged in'], 401);
@@ -73,6 +74,10 @@ public function integrateProvider(Request $request, $provider)
         'integration_url' => $integrationUrl
     ]);
 }
+
+
+
+
  public function providerCallback(Request $request)
     {
         dd($request->all());

@@ -81,7 +81,7 @@ class SpikeService
         if ($state) $query['state'] = $state;
         if ($providerUserId) $query['provider_user_id'] = $providerUserId;
 
-        $url = $this->baseUrl . "/providers/{$provider}/integration/init_url";
+        $url = $this->baseUrl . "/providers/{$provider}/integration/init";
 
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . $accessToken,
@@ -94,37 +94,45 @@ class SpikeService
         ]);
 
         if ($response->successful() && isset($response['path'])) {
+            // Extract integration code (ic/...)
+            preg_match('/(ic\/[^?]+)/', $response['path'], $matches);
+            $integrationCode = $matches[1] ?? null;
+
+            if ($integrationCode) {
+                // Store code in cache for 10 minutes
+                cache()->put("spike_integration_code_{$provider}_{$accessToken}", $integrationCode, now()->addMinutes(10));
+            }
+
             return $response['path'];
         }
 
         return null;
     }
 
-  public function confirmProviderConnection(string $accessToken, string $provider, string $integrationCode): array
-{
-    $url = $this->baseUrl . "/providers/{$provider}/integration/confirm";
+    public function confirmProviderConnection(string $accessToken, string $provider, string $integrationCode): array
+    {
+        $url = $this->baseUrl . "/providers/{$provider}/integration/confirm";
 
-    $response = Http::withHeaders([
-        'Authorization' => 'Bearer ' . $accessToken,
-        'Accept' => 'application/json'
-    ])->post($url, [
-        'integration_code' => $integrationCode
-    ]);
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $accessToken,
+            'Accept' => 'application/json'
+        ])->post($url, [
+            'integration_code' => $integrationCode
+        ]);
 
-    Log::debug('Spike Confirm Provider Response', [
-        'status' => $response->status(),
-        'body' => $response->body()
-    ]);
+        Log::debug('Spike Confirm Provider Response', [
+            'status' => $response->status(),
+            'body' => $response->body()
+        ]);
 
-    if ($response->successful()) {
-        return $response->json();
+        if ($response->successful()) {
+            return $response->json();
+        }
+
+        return [
+            'error' => 'Failed to confirm provider connection',
+            'status' => $response->status(),
+            'body' => $response->body()
+        ];
     }
-
-    return [
-        'error' => 'Failed to confirm provider connection',
-        'status' => $response->status(),
-        'body' => $response->body()
-    ];
-}
-
 }

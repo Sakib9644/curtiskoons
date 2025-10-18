@@ -33,7 +33,7 @@ Route::get('/social/links', [SocialLinksController::class, 'index']);
 Route::get('/settings', [SettingsController::class, 'index']);
 Route::get('/faq', [FaqController::class, 'index']);
 
-Route::post('subscriber/store',[SubscriberController::class, 'store'])->name('api.subscriber.store');
+Route::post('subscriber/store', [SubscriberController::class, 'store'])->name('api.subscriber.store');
 
 /*
 # Post
@@ -133,10 +133,10 @@ Route::prefix('cms')->name('cms.')->group(function () {
 });
 Route::prefix('spike')->name('spike.')->group(function () {
 
-    Route::post('connect', [SpikeController::class, 'initiateProviderConnection'])->name('spike.connect');
+    Route::post('/authenticate', [SpikeController::class, 'authenticateUser']);
 
     // OAuth callback handler (GET /api/spike/callback?code=abc&provider=garmin)
-    Route::get('callback', [SpikeController::class, 'providerCallback'])->name('callback');
+    Route::get('/integrate/{provider}', [SpikeController::class, 'integrateProvider']);
 
     // Fetch provider data (GET /api/spike/provider-data?provider=fitbit&start_date=2025-10-01&end_date=2025-10-18)
     Route::get('provider-data', [SpikeController::class, 'fetchProviderData']);
@@ -144,4 +144,3 @@ Route::prefix('spike')->name('spike.')->group(function () {
     // Connect and fetch initial stats (GET /api/spike/connect-fetch)
     Route::get('connect-fetch', [SpikeController::class, 'connectAndFetch']);
 });
-

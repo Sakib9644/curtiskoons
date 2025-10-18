@@ -73,7 +73,50 @@ public function integrateProvider(Request $request, $provider)
         'integration_url' => $integrationUrl
     ]);
 }
+ public function providerCallback(Request $request)
+    {
+        dd($request->all());
+        $userId = $request->query('user_id');
+        $provider = $request->query('provider_slug');
+        $code = $request->query('code');  // sometimes provided
+        $state = $request->query('state');
 
+        if (!$userId || !$provider) {
+            return response()->json(['error' => 'Missing user_id or provider_slug'], 400);
+        }
+
+        $user = \App\Models\User::find($userId);
+        if (!$user || !$user->spike_token) {
+            return response()->json(['error' => 'User not authenticated with Spike'], 401);
+        }
+
+        // Confirm provider connection with Spike
+        $result = $this->spikeAuth->confirmProviderConnection(
+            $user->spike_token,
+            $provider,
+            $state
+        );
+
+        if (isset($result['error'])) {
+            return response()->json(['error' => $result['error']], 400);
+        }
+
+        // Save provider in database
+        DB::table('user_providers')->updateOrInsert(
+            ['user_id' => $user->id, 'provider' => $provider],
+            [
+                'provider_user_id' => $result['provider_user_id'] ?? null,
+                'access_token' => $result['access_token'] ?? null,
+                'updated_at' => now()
+            ]
+        );
+
+        return response()->json([
+            'message' => 'Provider connected successfully',
+            'provider' => $provider,
+            'data' => $result
+        ]);
+    }
 
 }
 

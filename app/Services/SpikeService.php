@@ -100,32 +100,31 @@ class SpikeService
         return null;
     }
 
-  public function confirmProviderConnection(string $accessToken, string $provider, ?string $code = null, ?string $state = null): array
-    {
-        $payload = [];
-        if ($code) $payload['code'] = $code;
-        if ($state) $payload['state'] = $state;
+  public function confirmProviderConnection(string $accessToken, string $provider, string $integrationCode): array
+{
+    $url = $this->baseUrl . "/providers/{$provider}/integration/confirm";
 
-        $url = $this->baseUrl . "/providers/{$provider}/integration/confirm";
+    $response = Http::withHeaders([
+        'Authorization' => 'Bearer ' . $accessToken,
+        'Accept' => 'application/json'
+    ])->post($url, [
+        'integration_code' => $integrationCode
+    ]);
 
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $accessToken,
-            'Accept' => 'application/json'
-        ])->post($url, $payload);
+    Log::debug('Spike Confirm Provider Response', [
+        'status' => $response->status(),
+        'body' => $response->body()
+    ]);
 
-        Log::debug('Spike Confirm Provider Response', [
-            'status' => $response->status(),
-            'body' => $response->body()
-        ]);
-
-        if ($response->successful()) {
-            return $response->json();
-        }
-
-        return [
-            'error' => 'Failed to confirm provider connection',
-            'status' => $response->status(),
-            'body' => $response->body()
-        ];
+    if ($response->successful()) {
+        return $response->json();
     }
+
+    return [
+        'error' => 'Failed to confirm provider connection',
+        'status' => $response->status(),
+        'body' => $response->body()
+    ];
+}
+
 }

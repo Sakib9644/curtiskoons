@@ -101,4 +101,187 @@ class SpikeService
     }
 
 
+
+
+
+
+    /**
+     * Get user info from Spike
+     */
+public function getUserInfo($token)
+{
+    try {
+        $response = Http::withToken($token)
+            ->get("{$this->baseUrl}/userinfo"); // <- corrected
+
+        if ($response->successful()) {
+            return $response->json();
+        }
+
+        Log::error('Spike getUserInfo failed', [
+            'status' => $response->status(),
+            'body' => $response->json() ?? $response->body()
+        ]);
+
+        return null;
+
+    } catch (\Exception $e) {
+        Log::error('Spike getUserInfo exception: ' . $e->getMessage(), [
+            'trace' => $e->getTraceAsString()
+        ]);
+        return null;
+    }
+}
+
+
+
+
+    /**
+     * Get user properties from Spike
+     */
+    public function getUserProperties($token)
+{
+    try {
+        $response = Http::withToken($token)
+            ->get("{$this->baseUrl}/userproperties"); // corrected endpoint
+
+        if ($response->successful()) {
+            return $response->json();
+        }
+
+        Log::error('Spike getUserProperties failed', [
+            'status' => $response->status(),
+            'body' => $response->json() ?? $response->body() ?? []
+        ]);
+
+        return null;
+
+    } catch (\Exception $e) {
+        Log::error('Spike getUserProperties exception: ' . $e->getMessage(), [
+            'trace' => $e->getTraceAsString()
+        ]);
+        return null;
+    }
+}
+
+    /**
+     * Get provider records
+     */
+    public function getProviderRecords($token, $fromTimestamp, $toTimestamp, $providers = [], $metrics = [], $includeProviderSpecificMetrics = true)
+    {
+        try {
+            $params = [
+                'from_timestamp' => $fromTimestamp,
+                'to_timestamp' => $toTimestamp,
+                'providers' => $providers,
+                'metrics' => $metrics,
+                'include_provider_specific_metrics' => $includeProviderSpecificMetrics,
+            ];
+
+            $response = Http::withToken($token)
+                ->get("{$this->baseUrl}/queries/provider_records", $params);
+
+            if ($response->successful()) {
+                return $response->json();
+            }
+
+            Log::error('Spike getProviderRecords failed', $response->json());
+            return false;
+
+        } catch (Exception $e) {
+            Log::error('Spike getProviderRecords exception: '.$e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Get single provider record by ID
+     */
+public function getProviderRecordById($token, $recordId, $includeSamples = true, $includeProviderSpecificMetrics = true)
+{
+    try {
+        $params = [
+            'include_samples' => $includeSamples,
+            'include_provider_specific_metrics' => $includeProviderSpecificMetrics,
+        ];
+
+        $response = Http::withToken($token)
+            ->get("{$this->baseUrl}/queries/provider_records/{$recordId}", $params);
+
+        if ($response->successful()) {
+            return [
+                'success' => true,
+                'data' => $response->json(),
+                'message' => 'Provider record fetched successfully'
+            ];
+        }
+
+        // Decode JSON response body if possible
+        $responseData = $response->json() ?? ['raw' => $response->json()];
+        Log::error("Spike getProviderRecordById failed", $responseData);
+
+        return [
+            'success' => false,
+            'data' => null,
+            'message' => 'Failed to fetch provider record',
+            'response' => $responseData
+        ];
+
+    } catch (\Exception $e) {
+        Log::error("Spike getProviderRecordById exception: ".$e->getMessage());
+
+        return [
+            'success' => false,
+            'data' => null,
+            'message' => 'Exception occurred while fetching provider record',
+            'error' => $e->getMessage()
+        ];
+    }
+}
+public function listSleepData($token, $fromDate, $toDate, $providers = [], $includeStages = true, $includeSamples = true)
+{
+    try {
+        $params = [
+            'from_date' => $fromDate,
+            'to_date' => $toDate,
+            'providers' => $providers,
+            'include_stages' => $includeStages,
+            'include_samples' => $includeSamples,
+        ];
+
+        $response = Http::withToken($token)
+            ->get("{$this->baseUrl}/queries/sleeps", $params);
+
+        if ($response->successful()) {
+            return [
+                'success' => true,
+                'data' => $response->json(),
+            ];
+        }
+
+        Log::error('Spike listSleepData failed', [
+            'status' => $response->status(),
+            'body' => $response->body(),
+            'json' => $response->json() ?? null
+        ]);
+
+        return [
+            'success' => false,
+            'message' => 'Failed to fetch sleep data',
+            'status' => $response->status(),
+            'raw' => $response->body()
+        ];
+
+    } catch (\Exception $e) {
+        Log::error('Spike listSleepData exception: '.$e->getMessage(), [
+            'trace' => $e->getTraceAsString()
+        ]);
+
+        return [
+            'success' => false,
+            'message' => 'Exception occurred while fetching sleep data',
+            'error' => $e->getMessage()
+        ];
+    }
+}
 }

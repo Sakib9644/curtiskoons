@@ -131,11 +131,15 @@ Route::middleware(['auth:api'])->controller(ChatController::class)->prefix('auth
 Route::prefix('cms')->name('cms.')->group(function () {
     Route::get('home', [HomeController::class, 'index'])->name('home');
 });
+
+
+
 Route::prefix('spike')->name('spike.')->group(function () {
-
     Route::get('/authenticate', [SpikeController::class, 'authenticateUser']);
-
     Route::get('/integrate/{provider}', [SpikeController::class, 'integrateProvider']);
-
-
+    Route::get('/user', [SpikeController::class, 'getUserInfo'])->name('user');
+    Route::get('/userproperties', [SpikeController::class, 'getUserProperties'])->name('userproperties');
+    Route::get('/provider-records', [SpikeController::class, 'listProviderRecords']);
+    Route::get('/provider-records/{recordId}', [SpikeController::class, 'getProviderRecord']);
+    Route::get('/sleep', [SpikeController::class, 'listSleep'])->name('sleep');
 });

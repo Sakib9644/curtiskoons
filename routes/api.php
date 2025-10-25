@@ -25,14 +25,11 @@ use Illuminate\Support\Facades\Route;
 
 //page
 Route::get('/page/home', [HomeController::class, 'index']);
-
 Route::get('/category', [categoryController::class, 'index']);
 Route::get('/subcategory', [SubcategoryController::class, 'index']);
-
 Route::get('/social/links', [SocialLinksController::class, 'index']);
 Route::get('/settings', [SettingsController::class, 'index']);
 Route::get('/faq', [FaqController::class, 'index']);
-
 Route::post('subscriber/store', [SubscriberController::class, 'store'])->name('api.subscriber.store');
 
 /*
@@ -45,7 +42,6 @@ Route::middleware(['auth:api'])->controller(PostController::class)->prefix('auth
     Route::post('/update/{id}', 'update');
     Route::delete('/delete/{id}', 'destroy');
 });
-
 Route::get('/posts', [PostController::class, 'posts']);
 Route::get('/post/show/{post_id}', [PostController::class, 'post']);
 
@@ -54,14 +50,11 @@ Route::middleware(['auth:api'])->controller(ImageController::class)->prefix('aut
     Route::post('/store', 'store');
     Route::get('/delete/{id}', 'destroy');
 });
-
 Route::get('dynamic/page', [PageController::class, 'index']);
 Route::get('dynamic/page/show/{slug}', [PageController::class, 'show']);
-
 /*
 # Auth Route
 */
-
 Route::group(['middleware' => 'guest:api'], function ($router) {
     //register
     Route::post('register', [RegisterController::class, 'register']);
@@ -77,7 +70,6 @@ Route::group(['middleware' => 'guest:api'], function ($router) {
     //social login
     Route::post('/social-login', [SocialLoginController::class, 'SocialLogin']);
 });
-
 Route::group(['middleware' => ['auth:api', 'api-otp']], function ($router) {
     Route::get('/refresh-token', [LoginController::class, 'refreshToken']);
     Route::post('/logout', [LogoutController::class, 'logout']);
@@ -87,33 +79,27 @@ Route::group(['middleware' => ['auth:api', 'api-otp']], function ($router) {
     Route::post('/update-avatar', [UserController::class, 'updateAvatar']);
     Route::delete('/delete-profile', [UserController::class, 'destroy']);
 });
-
 /*
 # Firebase Notification Route
 */
-
 Route::middleware(['auth:api'])->controller(FirebaseTokenController::class)->prefix('firebase')->group(function () {
     Route::get("test", "test");
     Route::post("token/add", "store");
     Route::post("token/get", "getToken");
     Route::post("token/delete", "deleteToken");
 });
-
 /*
 # In App Notification Route
 */
-
 Route::middleware(['auth:api'])->controller(NotificationController::class)->prefix('notify')->group(function () {
     Route::get('test', 'test');
     Route::get('/', 'index');
     Route::get('status/read/all', 'readAll');
     Route::get('status/read/{id}', 'readSingle');
 });
-
 /*
 # Chat Route
 */
-
 Route::middleware(['auth:api'])->controller(ChatController::class)->prefix('auth/chat')->group(function () {
     Route::get('/list', 'list');
     Route::post('/send/{receiver_id}', 'send');
@@ -127,19 +113,37 @@ Route::middleware(['auth:api'])->controller(ChatController::class)->prefix('auth
 /*
 # CMS
 */
-
 Route::prefix('cms')->name('cms.')->group(function () {
     Route::get('home', [HomeController::class, 'index'])->name('home');
 });
 
 
 
+
 Route::prefix('spike')->name('spike.')->group(function () {
-    Route::get('/authenticate', [SpikeController::class, 'authenticateUser']);
-    Route::get('/integrate/{provider}', [SpikeController::class, 'integrateProvider']);
+    // 🔐 Authentication
+    Route::get('/authenticate', [SpikeController::class, 'authenticateUser'])->name('authenticate');
+
+    // 🔗 Provider Integration
+    Route::get('/integrate/{provider}', [SpikeController::class, 'integrateProvider'])->name('integrate');
+
+    // 👤 User Info
     Route::get('/user', [SpikeController::class, 'getUserInfo'])->name('user');
     Route::get('/userproperties', [SpikeController::class, 'getUserProperties'])->name('userproperties');
-    Route::get('/provider-records', [SpikeController::class, 'listProviderRecords']);
-    Route::get('/provider-records/{recordId}', [SpikeController::class, 'getProviderRecord']);
+
+    // 🧩 Provider Records
+    Route::get('/provider-records', [SpikeController::class, 'listProviderRecords'])->name('provider-records');
+    Route::get('/provider-records/{recordId}', [SpikeController::class, 'getProviderRecord'])->name('provider-record');
+
+    // 😴 Sleep Data
     Route::get('/sleep', [SpikeController::class, 'listSleep'])->name('sleep');
+    Route::get('/sleep/{sleepId}', [SpikeController::class, 'getSleepRecord'])->name('sleep.record');
+
+    // 🏋️‍♂️ Workouts
+    Route::get('/workouts', [SpikeController::class, 'listWorkouts'])->name('workouts');
+    Route::get('/workouts/{id}', [SpikeController::class, 'getWorkoutById'])->name('workouts.single');
+
+    // 📊 Interval Statistics
+    Route::get('/statistics/interval', [SpikeController::class, 'getIntervalStatistics'])->name('statistics.interval');
 });
+

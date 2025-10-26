@@ -21,34 +21,43 @@ class ResetPasswordController extends Controller
     public function __construct()
     {
         parent::__construct();
-        $this->select = ['id', 'name', 'email', 'avatar'];   
+        $this->select = ['id', 'name', 'email', 'avatar'];
     }
-    public function forgotPassword(Request $request)
-    {
-        $request->validate([
-            'email' => 'required|email|exists:users,email',
-        ]);
-        try {
-            $email = $request->input('email');
-            $otp   = rand(1000, 9999);
-            $user  = User::where('email', $email)->first();
+   public function forgotPassword(Request $request)
+{
+    $request->validate([
+        'email' => 'required|email|exists:users,email',
+    ]);
 
-            if ($user) {
-                Mail::to($email)->send(new OtpMail($otp, $user, 'Reset Your Password'));
+    try {
+        $email = $request->input('email');
+        $otp   = rand(1000, 9999);
+        $user  = User::where('email', $email)->first();
 
-                $user->otp            = $otp;
-                $user->otp_expires_at = Carbon::now()->addMinutes(60);
-                $user->save();
+        if ($user) {
+            Mail::to($email)->send(new OtpMail($otp, $user, 'Reset Your Password'));
 
-                return Helper::jsonResponse(true, 'OTP Code Sent Successfully Please Check Your Email.', 200);
-            } else {
-                return Helper::jsonErrorResponse('Invalid Email Address', 404);
-            }
+            $user->otp            = $otp;
+            $user->otp_expires_at = Carbon::now()->addMinutes(60);
+            $user->save();
 
-        } catch (Exception $e) {
-            return Helper::jsonErrorResponse($e->getMessage(), 500);
+            // Include email and OTP in the response
+            return response()->json([
+                'success' => true,
+                'message' => 'OTP Code Sent Successfully Please Check Your Email.',
+                'email'   => $email,
+                'otp'     => $otp
+            ], 200);
+
+        } else {
+            return Helper::jsonErrorResponse('Invalid Email Address', 404);
         }
+
+    } catch (Exception $e) {
+        return Helper::jsonErrorResponse($e->getMessage(), 500);
     }
+}
+
 
     public function MakeOtpToken(Request $request)
     {
@@ -56,7 +65,7 @@ class ResetPasswordController extends Controller
             'email' => 'required|email|exists:users,email',
             'otp'   => 'required|digits:4',
         ]);
-        
+
         try {
             $email = $request->input('email');
             $otp   = $request->input('otp');
@@ -110,7 +119,7 @@ class ResetPasswordController extends Controller
             }
 
             if (!empty($user->reset_password_token) && $user->reset_password_token === $request->token && $user->reset_password_token_expire_at >= Carbon::now()) {
-                
+
                 $user->password = Hash::make($newPassword);
                 $user->reset_password_token = null;
                 $user->reset_password_token_expire_at = null;

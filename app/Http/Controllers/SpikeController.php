@@ -15,12 +15,18 @@ class SpikeController extends Controller
         $this->spikeAuth = $spikeAuth;
     }
 
+    public function dashbaord(Request $request)
+    {
+
+        return response()->json(['error' => $request],
+        401);
+    }
+
     /**
      * Helper to extract all repeated query parameters (handles multiple values without [] notation)
      */
     private function getRepeatedQueryParam(Request $request, string $key): array
     {
-        dd($request->all());
         $queryString = $request->getQueryString();
         if (!$queryString) {
             return [];

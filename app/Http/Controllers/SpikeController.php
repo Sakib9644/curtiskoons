@@ -15,7 +15,7 @@ class SpikeController extends Controller
         $this->spikeAuth = $spikeAuth;
     }
 
-    public function dashbaord(Request $request)
+    public function dashboard(Request $request)
     {
 
         return response()->json(['error' => $request],

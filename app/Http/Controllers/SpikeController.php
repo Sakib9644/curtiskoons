@@ -16,6 +16,23 @@ class SpikeController extends Controller
     }
 
     /**
+     * Helper to extract all repeated query parameters (handles multiple values without [] notation)
+     */
+    private function getRepeatedQueryParam(Request $request, string $key): array
+    {
+        dd($request->all());
+        $queryString = $request->getQueryString();
+        if (!$queryString) {
+            return [];
+        }
+
+        $pattern = '/' . preg_quote($key . '=', '/') . '([^&]*)/';
+        preg_match_all($pattern, $queryString, $matches);
+        $values = $matches[1] ?? [];
+        return array_map('urldecode', $values);
+    }
+
+    /**
      * Authenticate logged-in user and get Spike access token
      */
     public function authenticateUser(Request $request)
@@ -95,9 +112,9 @@ class SpikeController extends Controller
                 $user->spike_token,
                 $fromTimestamp,
                 $request->input('to_timestamp', now()->toIso8601String()),
-                $request->input('providers', []),
-                $request->input('metrics', []),
-                $request->input('include_provider_specific_metrics', true)
+                $this->getRepeatedQueryParam($request, 'providers'),
+                $this->getRepeatedQueryParam($request, 'metrics'),
+                $request->boolean('include_provider_specific_metrics', true)
             );
 
             if ($records === false) {
@@ -209,7 +226,7 @@ class SpikeController extends Controller
             return response()->json(['success' => false, 'message' => 'from_date and to_date are required'], 422);
         }
 
-        $providers = $request->input('providers', []);
+        $providers = $this->getRepeatedQueryParam($request, 'providers');
         $includeStages = $request->boolean('include_stages', true);
         $includeSamples = $request->boolean('include_samples', true);
 
@@ -261,12 +278,7 @@ class SpikeController extends Controller
     }
 
     /**
-     * 🏋️‍♂️ List workouts data
-     */
-
-
-    /**
-     * 🏋️‍♀️ Get single workout record by ID
+     * List workouts data
      */
     public function listWorkouts(Request $request)
     {
@@ -287,6 +299,9 @@ class SpikeController extends Controller
         return response()->json($result);
     }
 
+    /**
+     * Get single workout record by ID
+     */
     public function getWorkoutById($workoutId)
     {
         try {
@@ -311,38 +326,171 @@ class SpikeController extends Controller
             return response()->json(['success' => false, 'message' => 'Exception: ' . $e->getMessage()], 500);
         }
     }
+
+    /**
+     * Get interval statistics
+     */
     public function getIntervalStatistics(Request $request)
-{
-    $user = auth('api')->user();
-    if (!$user || !$user->spike_token) {
-        return response()->json(['success' => false, 'message' => 'User not authenticated with Spike'], 401);
-    }
+    {
+        $user = auth('api')->user();
+        if (!$user || !$user->spike_token) {
+            return response()->json(['success' => false, 'message' => 'User not authenticated with Spike'], 401);
+        }
 
-    $params = $request->only([
-        'from_timestamp',
-        'to_timestamp',
-        'interval',
-        'types',
-        'include_record_ids'
-    ]);
+        $types = $this->getRepeatedQueryParam($request, 'types');
+        if (empty($types)) {
+            return response()->json(['success' => false, 'message' => 'types query parameter is required'], 422);
+        }
 
-    if (!isset($params['types']) || !is_array($params['types']) || empty($params['types'])) {
-        return response()->json(['success' => false, 'message' => 'types[] query parameter is required'], 422);
-    }
+        $params = $request->only([
+            'from_timestamp',
+            'to_timestamp',
+            'interval',
+            'include_record_ids'
+        ]);
+        $params['types'] = $types;
 
-    $data = $this->spikeAuth->getIntervalStatistics($user->spike_token, $params);
+        $data = $this->spikeAuth->getIntervalStatistics($user->spike_token, $params);
 
-    if (!$data) {
+        if (!$data) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch interval statistics'
+            ], 500);
+        }
+
         return response()->json([
-            'success' => false,
-            'message' => 'Failed to fetch interval statistics'
-        ], 500);
+            'success' => true,
+            'data' => $data
+        ]);
     }
 
-    return response()->json([
-        'success' => true,
-        'data' => $data
-    ]);
-}
+    /**
+     * Get Daily Statistics
+     */
+    public function getDailyStatistics(Request $request)
+    {
+        $user = auth('api')->user();
+        if (!$user || !$user->spike_token) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not authenticated with Spike'
+            ], 401);
+        }
 
+        $fromDate = $request->input('from_date');
+        $toDate = $request->input('to_date');
+        $types = $this->getRepeatedQueryParam($request, 'types');
+        $providers = $this->getRepeatedQueryParam($request, 'providers');
+        $excludeManual = $request->boolean('exclude_manual', false);
+        $includeRecordIds = $request->boolean('include_record_ids', false);
+        $deviceTypes = $this->getRepeatedQueryParam($request, 'device_types');
+
+        // Validate required fields
+        if (!$fromDate || !$toDate) {
+            return response()->json([
+                'success' => false,
+                'message' => 'from_date and to_date are required'
+            ], 422);
+        }
+
+        if (empty($types)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'types query parameter is required'
+            ], 422);
+        }
+
+        try {
+            // Call SpikeService to get daily statistics
+            $data = $this->spikeAuth->getDailyStatistics(
+                $user->spike_token,
+                $fromDate,
+                $toDate,
+                $types,
+                $providers,
+                $excludeManual,
+                $includeRecordIds,
+                $deviceTypes
+            );
+
+            if (!$data) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to fetch daily statistics'
+                ], 500);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => $data
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Exception: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get Time Series
+     */
+    public function getTimeSeries(Request $request)
+    {
+        $user = auth('api')->user();
+        if (!$user || !$user->spike_token) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not authenticated with Spike'
+            ], 401);
+        }
+
+        $fromTimestamp = $request->input('from_timestamp');
+        $toTimestamp = $request->input('to_timestamp');
+        $metric = $request->input('metric');
+        $providers = $this->getRepeatedQueryParam($request, 'providers');
+        $includeRecordIds = $request->boolean('include_record_ids', false);
+        $mergeMethod = $request->input('merge_method');
+        $deviceTypes = $this->getRepeatedQueryParam($request, 'device_types');
+
+        // Validate required fields
+        if (!$fromTimestamp || !$toTimestamp || !$metric) {
+            return response()->json([
+                'success' => false,
+                'message' => 'from_timestamp, to_timestamp, and metric are required'
+            ], 422);
+        }
+
+        try {
+            // Call SpikeService to get time series
+            $data = $this->spikeAuth->getTimeSeries(
+                $user->spike_token,
+                $fromTimestamp,
+                $toTimestamp,
+                $metric,
+                $providers,
+                $includeRecordIds,
+                $mergeMethod,
+                $deviceTypes
+            );
+
+            if (!$data) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to fetch time series data'
+                ], 500);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => $data
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Exception: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

@@ -55,8 +55,11 @@ class SpikeService
             'body'   => $response->body()
         ]);
 
-        if ($response->successful() && isset($response['access_token'])) {
-            return $response['access_token'];
+        if ($response->successful()) {
+            $json = $response->json();
+            if (isset($json['access_token'])) {
+                return $json['access_token'];
+            }
         }
 
         Log::error('Spike HMAC Auth failed', [
@@ -97,8 +100,11 @@ class SpikeService
             'body' => $response->body()
         ]);
 
-        if ($response->successful() && isset($response['path'])) {
-            return $response['path'];
+        if ($response->successful()) {
+            $json = $response->json();
+            if (isset($json['path'])) {
+                return $json['path'];
+            }
         }
 
         return null;
@@ -324,56 +330,198 @@ class SpikeService
         }
     }
 
+    public function getIntervalStatistics(string $token, array $params)
+    {
+        $defaultParams = [
+            'from_timestamp' => now()->subDay()->toIso8601String(),
+            'to_timestamp' => now()->toIso8601String(),
+            'interval' => '1h',
+            'types' => ['steps'], // default type
+            'include_record_ids' => false,
+        ];
 
-public function getIntervalStatistics(string $token, array $params)
-{
-    $defaultParams = [
-        'from_timestamp' => now()->subDay()->toIso8601String(),
-        'to_timestamp' => now()->toIso8601String(),
-        'interval' => '1h',
-        'types' => ['steps'], // default type
-        'include_record_ids' => false,
-    ];
+        $params = array_merge($defaultParams, $params);
 
-    $params = array_merge($defaultParams, $params);
-
-    // Build the query string without array notation for 'types'
-    $query = [];
-    foreach ($params as $key => $value) {
-        if ($key === 'types' && is_array($value)) {
-            foreach ($value as $type) {
-                $query[] = "types=" . urlencode($type);
+        // Build the query string without array notation for 'types'
+        $query = [];
+        foreach ($params as $key => $value) {
+            if ($key === 'types' && is_array($value)) {
+                foreach ($value as $type) {
+                    $query[] = "types=" . urlencode($type);
+                }
+            } else {
+                $query[] = urlencode($key) . "=" . urlencode($value);
             }
-        } else {
-            $query[] = urlencode($key) . "=" . urlencode($value);
         }
-    }
 
-    $queryString = implode('&', $query);
+        $queryString = implode('&', $query);
 
-    try {
-        $url = "{$this->baseUrl}/queries/statistics/interval?" . $queryString;
+        try {
+            $url = "{$this->baseUrl}/queries/statistics/interval?" . $queryString;
 
-        $response = Http::withToken($token)
-            ->acceptJson()
-            ->get($url);
+            $response = Http::withToken($token)
+                ->acceptJson()
+                ->get($url);
 
-        if ($response->failed()) {
-            Log::error('Spike getIntervalStatistics failed', [
-                'status' => $response->status(),
-                'body' => $response->body(),
-                'url' => $url,
+            if ($response->failed()) {
+                Log::error('Spike getIntervalStatistics failed', [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                    'url' => $url,
+                ]);
+                return null;
+            }
+
+            return $response->json();
+        } catch (\Exception $e) {
+            Log::error('Spike getIntervalStatistics exception', [
+                'message' => $e->getMessage(),
             ]);
             return null;
         }
-
-        return $response->json();
-    } catch (\Exception $e) {
-        Log::error('Spike getIntervalStatistics exception', [
-            'message' => $e->getMessage(),
-        ]);
-        return null;
     }
-}
 
+    public function getDailyStatistics(
+        string $token,
+        string $fromDate,
+        string $toDate,
+        array $types,
+        array $providers = [],
+        bool $excludeManual = false,
+        bool $includeRecordIds = false,
+        array $deviceTypes = []
+    ) {
+        // Build the query string manually without array notation for arrays
+        $queryParts = [
+            'from_date=' . urlencode($fromDate),
+            'to_date=' . urlencode($toDate),
+            'exclude_manual=' . ($excludeManual ? 'true' : 'false'),
+            'include_record_ids=' . ($includeRecordIds ? 'true' : 'false'),
+        ];
+
+        // Append types
+        foreach ($types as $type) {
+            $queryParts[] = 'types=' . urlencode($type);
+        }
+
+        // Append providers if not empty
+        if (!empty($providers)) {
+            foreach ($providers as $provider) {
+                $queryParts[] = 'providers=' . urlencode($provider);
+            }
+        }
+
+        // Append device_types if not empty
+        if (!empty($deviceTypes)) {
+            foreach ($deviceTypes as $deviceType) {
+                $queryParts[] = 'device_types=' . urlencode($deviceType);
+            }
+        }
+
+        $queryString = implode('&', $queryParts);
+
+        try {
+            $url = "{$this->baseUrl}/queries/statistics/daily?" . $queryString;
+
+            $response = Http::withToken($token)
+                ->acceptJson()
+                ->get($url);
+
+            Log::debug('Spike getDailyStatistics response', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+                'query' => $queryString
+            ]);
+
+            if ($response->successful()) {
+                return $response->json();
+            }
+
+            Log::error('Spike getDailyStatistics failed', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+                'query' => $queryString
+            ]);
+
+            return null;
+        } catch (\Exception $e) {
+            Log::error('Spike getDailyStatistics exception', [
+                'message' => $e->getMessage(),
+            ]);
+            return null;
+        }
+    }
+
+    /**
+     * Get Time Series
+     */
+    public function getTimeSeries(
+        string $token,
+        string $fromTimestamp,
+        string $toTimestamp,
+        string $metric,
+        array $providers = [],
+        bool $includeRecordIds = false,
+        ?string $mergeMethod = null,
+        array $deviceTypes = []
+    ) {
+        // Build the query string manually without array notation for arrays
+        $queryParts = [
+            'from_timestamp=' . urlencode($fromTimestamp),
+            'to_timestamp=' . urlencode($toTimestamp),
+            'metric=' . urlencode($metric),
+            'include_record_ids=' . ($includeRecordIds ? 'true' : 'false'),
+        ];
+
+        if ($mergeMethod) {
+            $queryParts[] = 'merge_method=' . urlencode($mergeMethod);
+        }
+
+        // Append providers if not empty
+        if (!empty($providers)) {
+            foreach ($providers as $provider) {
+                $queryParts[] = 'providers=' . urlencode($provider);
+            }
+        }
+
+        // Append device_types if not empty
+        if (!empty($deviceTypes)) {
+            foreach ($deviceTypes as $deviceType) {
+                $queryParts[] = 'device_types=' . urlencode($deviceType);
+            }
+        }
+
+        $queryString = implode('&', $queryParts);
+
+        try {
+            $url = "{$this->baseUrl}/queries/timeseries?" . $queryString;
+
+            $response = Http::withToken($token)
+                ->acceptJson()
+                ->get($url);
+
+            Log::debug('Spike getTimeSeries response', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+                'query' => $queryString
+            ]);
+
+            if ($response->successful()) {
+                return $response->json();
+            }
+
+            Log::error('Spike getTimeSeries failed', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+                'query' => $queryString
+            ]);
+
+            return null;
+        } catch (\Exception $e) {
+            Log::error('Spike getTimeSeries exception', [
+                'message' => $e->getMessage(),
+            ]);
+            return null;
+        }
+    }
 }

@@ -145,5 +145,11 @@ Route::prefix('spike')->name('spike.')->group(function () {
 
     // 📊 Interval Statistics
     Route::get('/statistics/interval', [SpikeController::class, 'getIntervalStatistics'])->name('statistics.interval');
+
+    // 📅 Daily Statistics
+    Route::get('/statistics/daily', [SpikeController::class, 'getDailyStatistics'])->name('statistics.daily');
+
+    // 📈 Time Series
+    Route::get('/timeseries', [SpikeController::class, 'getTimeSeries'])->name('timeseries');
 });
 

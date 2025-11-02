@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use App\Services\SpikeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -18,37 +17,18 @@ class SpikeController extends Controller
 
     public function connection(Request $request)
     {
-        // ✅ Validate input first
-        $request->validate([
-            'provider_slug' => 'required|string',
-            'user_id' => 'required|exists:users,id',
-        ]);
-
         $providerSlug = $request->input('provider_slug');
         $userId = $request->input('user_id');
 
-        // ✅ Find the user
-        $user = User::find($userId);
-
-        // ✅ Get access token
-        $token = $this->spikeAuth->getAccessToken((string) $user->id);
-
-        if (!$token) {
-            return response()->json(['error' => 'Failed to authenticate user'], 401);
+        if (!$providerSlug || !$userId) {
+            return response()->json(['error' => 'Missing provider_slug or user_id'], 400);
         }
 
-        // ✅ Save token
-        $user->spike_token = $token;
-        $user->save();
-
-        // ✅ Return success response
         return response()->json([
             'success' => true,
-            'message' => ucfirst($providerSlug) . ' connected successfully',
-            'token' => $token,
-        ], 200);
+            'message' => $providerSlug . 'Connected Successfully',
+        ]);
     }
-
 
     /**
      * Helper to extract all repeated query parameters (handles multiple values without [] notation)
@@ -69,34 +49,35 @@ class SpikeController extends Controller
     /**
      * Authenticate logged-in user and get Spike access token
      */
-    // public function authenticateUser(Request $request)
-    // {
-    //     $user = auth('api')->user();
-    //     if (!$user) {
-    //         return response()->json(['error' => 'User not logged in'], 401);
-    //     }
+    public function authenticateUser()
+    {
+        $user = auth('api')->user();
+        if (!$user) {
+            return response()->json(['error' => 'User not logged in'], 401);
+        }
 
-    //     $userId = (string) $user->id;
-    //     $token = $this->spikeAuth->getAccessToken($userId);
+        $userId = (string) $user->id;
+        $token = $this->spikeAuth->getAccessToken($userId);
 
-    //     if (!$token) {
-    //         return response()->json(['error' => 'Failed to authenticate user'], 401);
-    //     }
+        if (!$token) {
+            return response()->json(['error' => 'Failed to authenticate user'], 401);
+        }
 
-    //     $user->spike_token = $token;
-    //     $user->save();
+        $user->spike_token = $token;
+        $user->save();
 
-    //     return response()->json([
-    //         'user_id' => $userId,
-    //         'access_token' => $token
-    //     ]);
-    // }
+        return response()->json([
+            'user_id' => $userId,
+            'access_token' => $token
+        ]);
+    }
 
     /**
      * Integrate provider (Fitbit, Garmin, etc.)
      */
     public function integrateProvider(Request $request, $provider)
     {
+        $this->authenticateUser();
         $user = auth('api')->user();
         if (!$user || !$user->spike_token) {
             return response()->json(['error' => 'User not authenticated with Spike'], 401);

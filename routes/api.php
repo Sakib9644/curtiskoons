@@ -123,8 +123,8 @@ Route::prefix('cms')->name('cms.')->group(function () {
 Route::prefix('spike')->name('spike.')->group(function () {
     // 🔐 Authentication
     Route::get('/authenticate', [SpikeController::class, 'authenticateUser'])->name('authenticate');
-    
-    Route::get('/dashbaord', [SpikeController::class, 'dashboard'])->name('authenticates');
+
+    Route::get('/connection', [SpikeController::class, 'connection'])->name('authenticates');
 
     // 🔗 Provider Integration
     Route::get('/integrate/{provider}', [SpikeController::class, 'integrateProvider'])->name('integrate');

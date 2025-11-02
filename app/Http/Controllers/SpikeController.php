@@ -15,12 +15,19 @@ class SpikeController extends Controller
         $this->spikeAuth = $spikeAuth;
     }
 
-    public function dashboard(Request $request)
+    public function connection(Request $request)
     {
-        dd($request->all());
+        $providerSlug = $request->input('provider_slug');
+        $userId = $request->input('user_id');
 
-        return response()->json(['error' => $request],
-        401);
+        if (!$providerSlug || !$userId) {
+            return response()->json(['error' => 'Missing provider_slug or user_id'], 400);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => $providerSlug . 'Connected Successfully',
+        ]);
     }
 
     /**

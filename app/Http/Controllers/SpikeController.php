@@ -77,17 +77,30 @@ class SpikeController extends Controller
      */
     public function integrateProvider(Request $request, $provider)
     {
-        $this->authenticateUser();
-
         $user = auth('api')->user();
-        if (!$user || !$user->spike_token) {
-            return response()->json(['error' => 'User not authenticated with Spike'], 401);
+        if (!$user) {
+            return response()->json(['error' => 'User not logged in'], 401);
         }
 
+        // Get or refresh Spike token if not present
+        if (!$user->spike_token) {
+            $userId = (string) $user->id;
+            $token = $this->spikeAuth->getAccessToken($userId);
+
+            if (!$token) {
+                return response()->json(['error' => 'Failed to authenticate with Spike'], 401);
+            }
+
+            $user->spike_token = $token;
+            $user->save();
+        }
+
+        // Validate provider
         if (!$provider) {
             return response()->json(['error' => 'Provider slug is required'], 400);
         }
 
+        // Get integration URL
         $redirectUri = $request->input('redirect_uri');
         $state = $request->input('state');
 

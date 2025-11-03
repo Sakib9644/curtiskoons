@@ -23,6 +23,27 @@ class UserController extends Controller
         $data = User::select($this->select)->find(auth('api')->user()->id);
         return Helper::jsonResponse(true, 'User details fetched successfully', 200, $data);
     }
+    public function faq()
+    {
+   {
+        $faqs = [
+            [
+                'question' => 'How does the booking process work?',
+                'answer' => 'Booking with Le Collectionist is both simple and bespoke. Choose a property from our collection, book online or speak to one of our advisors for more details. Once the property is selected and availability is confirmed with the owner, you confirm the booking and its terms. A deposit secures your booking, then our concierge service takes over to arrange all necessary services and make your stay unique.'
+            ],
+            [
+                'question' => 'How do I pay for my stay?',
+                'answer' => 'Payment can be made securely by credit card, bank transfer, or other approved methods. We ensure all transactions are safe, transparent, and provide you with receipts for your records.'
+            ],
+            [
+                'question' => 'Will I be asked for a security deposit?',
+                'answer' => 'Yes, most properties require a security deposit. This is either held on your credit card or transferred before arrival. It is fully refundable after check-out, provided no damage is reported.'
+            ]
+        ];
+
+        return response()->json($faqs);
+    }
+    }
 
     public function updateProfile(Request $request)
     {

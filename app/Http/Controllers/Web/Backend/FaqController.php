@@ -76,7 +76,6 @@ class FaqController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'category'           => 'required|string',
             'question'           => 'required|string',
             'answer'             => 'required|string'
         ]);
@@ -90,7 +89,7 @@ class FaqController extends Controller
 
             $faq = new FAQ();
 
-            $faq->category = $data['category'];
+            $faq->category = $data['category'] ?? null;
             $faq->question = $data['question'];
             $faq->answer = $data['answer'];
             $faq->save();

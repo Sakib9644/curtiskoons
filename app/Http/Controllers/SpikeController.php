@@ -26,7 +26,7 @@ class SpikeController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => $providerSlug . 'Connected Successfully',
+            'message' => $providerSlug . ' Connected Successfully',
         ]);
     }
 
@@ -78,6 +78,7 @@ class SpikeController extends Controller
     public function integrateProvider(Request $request, $provider)
     {
         $this->authenticateUser();
+
         $user = auth('api')->user();
         if (!$user || !$user->spike_token) {
             return response()->json(['error' => 'User not authenticated with Spike'], 401);

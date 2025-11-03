@@ -36,41 +36,61 @@ class SpikeService
     }
 
     public function getAccessToken(string $userId): ?string
-    {
-        $signature = $this->generateHmacSignature($userId);
+{
+    // Log inputs
+    Log::info('Starting Spike Auth', [
+        'user_id' => $userId,
+        'app_id' => $this->appId,
+        'base_url' => $this->baseUrl
+    ]);
 
-        $payload = [
-            'application_id' => (int)$this->appId,
-            'application_user_id' => $userId,
-            'signature' => $signature
-        ];
+    $signature = $this->generateHmacSignature($userId);
 
-        $response = Http::withHeaders([
-            'Accept' => 'application/json',
-            'Content-Type' => 'application/json',
-        ])->post("{$this->baseUrl}/auth/hmac", $payload);
+    // Log signature
+    Log::info('Generated Signature', [
+        'signature' => $signature,
+        'signature_length' => strlen($signature)
+    ]);
 
-        Log::debug('Spike Auth Response', [
-            'status' => $response->status(),
-            'body'   => $response->body()
-        ]);
+    $payload = [
+        'application_id' => (int)$this->appId,
+        'application_user_id' => $userId,
+        'signature' => $signature
+    ];
 
-        if ($response->successful()) {
-            $json = $response->json();
-            if (isset($json['access_token'])) {
-                return $json['access_token'];
-            }
+    // Log payload
+    Log::info('Request Payload', $payload);
+
+    $response = Http::withHeaders([
+        'Accept' => 'application/json',
+        'Content-Type' => 'application/json',
+    ])->post("{$this->baseUrl}/auth/hmac", $payload);
+
+    Log::info('Spike Auth Response', [
+        'status' => $response->status(),
+        'body'   => $response->body(),
+        'headers' => $response->headers()
+    ]);
+
+    if ($response->successful()) {
+        $json = $response->json();
+        if (isset($json['access_token'])) {
+            return $json['access_token'];
         }
 
-        Log::error('Spike HMAC Auth failed', [
-            'status' => $response->status(),
-            'body'   => $response->body(),
-            'userId' => $userId,
-            'signature' => $signature
+        Log::error('Response successful but no access_token', [
+            'json' => $json
         ]);
-
-        return null;
     }
+
+    Log::error('Spike HMAC Auth failed', [
+        'status' => $response->status(),
+        'body'   => $response->body(),
+        'userId' => $userId
+    ]);
+
+    return null;
+}
 
     // ------------------------------------------------
     // 🌐 Provider Integration

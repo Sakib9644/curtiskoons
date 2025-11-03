@@ -52,7 +52,24 @@ class SpikeController extends Controller
     public function authenticateUser()
     {
         $user = auth('api')->user();
-        if (!$user) {
+
+
+        return response()->json([
+            'user_id' => $userId,
+            'access_token' => $token
+        ]);
+    }
+
+    /**
+     * Integrate provider (Fitbit, Garmin, etc.)
+     */
+    public function integrateProvider(Request $request, $provider)
+    {
+
+
+        $user = auth('api')->user();
+
+           if (!$user) {
             return response()->json(['error' => 'User not logged in'], 401);
         }
 
@@ -65,29 +82,9 @@ class SpikeController extends Controller
 
         $user->spike_token = $token;
         $user->save();
-
-        // ✅ Return user and token instead of sending a response here
-        return [
-            'user' => $user,
-            'token' => $token
-        ];
-    }
-
-    /**
-     * Integrate provider (Fitbit, Garmin, etc.)
-     */
-    public function integrateProvider(Request $request, $provider)
-    {
-        // ✅ Get authentication result
-        $authResult = $this->authenticateUser();
-
-        // ✅ Check if authenticateUser() returned a response (meaning auth failed)
-        if ($authResult instanceof \Illuminate\Http\JsonResponse) {
-            return $authResult;
+        if (!$user || !$user->spike_token) {
+            return response()->json(['error' => 'User not authenticated with Spike'], 401);
         }
-
-        $user = $authResult['user'];
-        $token = $authResult['token'];
 
         if (!$provider) {
             return response()->json(['error' => 'Provider slug is required'], 400);
@@ -97,7 +94,7 @@ class SpikeController extends Controller
         $state = $request->input('state');
 
         $integrationUrl = $this->spikeAuth->getProviderIntegrationUrl(
-            $token,
+            $user->spike_token,
             $provider,
             $redirectUri,
             $state
@@ -108,12 +105,10 @@ class SpikeController extends Controller
         }
 
         return response()->json([
-            'provider' => ucfirst($provider),
-            'integration_url' => $integrationUrl,
-            'message' => ucfirst($provider) . ' Connected Successfully',
+            'provider' => $provider,
+            'integration_url' => $integrationUrl
         ]);
     }
-
 
     /**
      * List provider records

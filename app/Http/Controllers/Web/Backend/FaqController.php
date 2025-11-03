@@ -89,7 +89,7 @@ class FaqController extends Controller
 
             $faq = new FAQ();
 
-            $faq->category = $data['category'] ?? null;
+            $faq->category = $data['category'] ?? "No Category";
             $faq->question = $data['question'];
             $faq->answer = $data['answer'];
             $faq->save();

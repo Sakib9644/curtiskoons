@@ -97,6 +97,7 @@ class SpikeController extends Controller
 
         $userId = (string) $user->id;
         $token = $this->spikeAuth->getAccessToken($userId);
+        dd( $token );
 
         if (!$token) {
             Log::error('Failed to get Spike access token', [

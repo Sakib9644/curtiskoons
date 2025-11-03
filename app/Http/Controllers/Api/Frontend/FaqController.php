@@ -9,7 +9,7 @@ class FaqController extends Controller{
    public function index() {
     $faq = FAQ::select('question','answer')->get();
 
-    $data = ['faq' => $faq];
+    $data =  $faq;
 
     return Helper::jsonResponse(true, 'FAQ list', 200, $data);
 }

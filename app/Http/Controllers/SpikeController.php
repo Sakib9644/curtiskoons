@@ -77,8 +77,6 @@ class SpikeController extends Controller
     }
 
     $request->validate([
-        'redirect_uri' => 'required|url',
-        'state' => 'nullable|string'
     ]);
 
     $redirectUri = $request->input('redirect_uri');

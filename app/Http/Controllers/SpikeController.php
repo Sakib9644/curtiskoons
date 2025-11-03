@@ -66,10 +66,11 @@ class SpikeController extends Controller
         $user->spike_token = $token;
         $user->save();
 
-        return response()->json([
-            'user_id' => $userId,
-            'access_token' => $token
-        ]);
+        // ✅ Return user and token instead of sending a response here
+        return [
+            'user' => $user,
+            'token' => $token
+        ];
     }
 
     /**
@@ -77,12 +78,16 @@ class SpikeController extends Controller
      */
     public function integrateProvider(Request $request, $provider)
     {
-        $this->authenticateUser();
+        // ✅ Get authentication result
+        $authResult = $this->authenticateUser();
 
-        $user = auth('api')->user();
-        if (!$user || !$user->spike_token) {
-            return response()->json(['error' => 'User not authenticated with Spike'], 401);
+        // ✅ Check if authenticateUser() returned a response (meaning auth failed)
+        if ($authResult instanceof \Illuminate\Http\JsonResponse) {
+            return $authResult;
         }
+
+        $user = $authResult['user'];
+        $token = $authResult['token'];
 
         if (!$provider) {
             return response()->json(['error' => 'Provider slug is required'], 400);
@@ -92,7 +97,7 @@ class SpikeController extends Controller
         $state = $request->input('state');
 
         $integrationUrl = $this->spikeAuth->getProviderIntegrationUrl(
-            $user->spike_token,
+            $token,
             $provider,
             $redirectUri,
             $state
@@ -103,10 +108,12 @@ class SpikeController extends Controller
         }
 
         return response()->json([
-            'provider' => $provider,
-            'integration_url' => $integrationUrl
+            'provider' => ucfirst($provider),
+            'integration_url' => $integrationUrl,
+            'message' => ucfirst($provider) . ' Connected Successfully',
         ]);
     }
+
 
     /**
      * List provider records

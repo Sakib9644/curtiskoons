@@ -26,7 +26,7 @@ class SpikeController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => "$providerSlug Connected Successfully",
+            'message' => ucfirst($providerSlug) . " Connected Successfully",
         ]);
     }
 

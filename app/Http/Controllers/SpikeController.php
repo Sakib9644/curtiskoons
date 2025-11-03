@@ -63,52 +63,58 @@ class SpikeController extends Controller
     /**
      * Integrate provider (Fitbit, Garmin, etc.)
      */
-    public function integrateProvider(Request $request, $provider)
-    {
-
-
-        $user = auth('api')->user();
-
-           if (!$user) {
-            return response()->json(['error' => 'User not logged in'], 401);
-        }
-
-        $userId = (string) $user->id;
-        $token = $this->spikeAuth->getAccessToken($userId);
-
-        if (!$token) {
-            return response()->json(['error' => 'Failed to authenticate user'], 401);
-        }
-
-        $user->spike_token = $token;
-        $user->save();
-        if (!$user || !$user->spike_token) {
-            return response()->json(['error' => 'User not authenticated with Spike'], 401);
-        }
-
-        if (!$provider) {
-            return response()->json(['error' => 'Provider slug is required'], 400);
-        }
-
-        $redirectUri = $request->input('redirect_uri');
-        $state = $request->input('state');
-
-        $integrationUrl = $this->spikeAuth->getProviderIntegrationUrl(
-            $user->spike_token,
-            $provider,
-            $redirectUri,
-            $state
-        );
-
-        if (!$integrationUrl) {
-            return response()->json(['error' => 'Failed to get integration URL'], 500);
-        }
-
-        return response()->json([
-            'provider' => $provider,
-            'integration_url' => $integrationUrl
-        ]);
+   public function integrateProvider(Request $request, $provider)
+{
+    // ✅ Step 1: Authenticate user
+    $user = auth('api')->user();
+    if (!$user) {
+        return response()->json(['error' => 'User not logged in'], 401);
     }
+
+    // ✅ Step 2: Validate required parameters
+    if (!$provider) {
+        return response()->json(['error' => 'Provider slug is required'], 400);
+    }
+
+    $request->validate([
+        'redirect_uri' => 'required|url',
+        'state' => 'nullable|string'
+    ]);
+
+    $redirectUri = $request->input('redirect_uri');
+    $state = $request->input('state');
+
+    // ✅ Step 3: Get Spike access token
+    $userId = (string) $user->id;
+    $token = $this->spikeAuth->getAccessToken($userId);
+
+    if (!$token) {
+        return response()->json(['error' => 'Failed to authenticate with Spike'], 401);
+    }
+
+    // ✅ Step 4: Save token using save()
+    $user->spike_token = $token;
+    $user->save();
+
+    // ✅ Step 5: Generate provider integration URL
+    $integrationUrl = $this->spikeAuth->getProviderIntegrationUrl(
+        $token,
+        $provider,
+        $redirectUri,
+        $state
+    );
+
+    if (!$integrationUrl) {
+        return response()->json(['error' => 'Failed to get integration URL'], 500);
+    }
+
+    // ✅ Step 6: Return successful response
+    return response()->json([
+        'success' => true,
+        'provider' => $provider,
+        'integration_url' => $integrationUrl
+    ]);
+}
 
     /**
      * List provider records

@@ -57,6 +57,7 @@ class SpikeService
         'application_user_id' => $userId,
         'signature' => $signature
     ];
+         dd( $payload  );
 
     // Log payload
     Log::info('Request Payload', $payload);
@@ -66,7 +67,7 @@ class SpikeService
         'Content-Type' => 'application/json',
         ])->post("{$this->baseUrl}/auth/hmac", $payload);
 
-        dd( $response  );
+
     Log::info('Spike Auth Response', [
         'status' => $response->status(),
         'body'   => $response->body(),

@@ -57,7 +57,6 @@ class SpikeService
         'application_user_id' => $userId,
         'signature' => $signature
     ];
-         dd( $payload  );
 
     // Log payload
     Log::info('Request Payload', $payload);

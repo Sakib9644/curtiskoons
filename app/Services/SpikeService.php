@@ -45,7 +45,6 @@ class SpikeService
     ]);
 
     $signature = $this->generateHmacSignature($userId);
-    dd( $signature );
 
     // Log signature
     Log::info('Generated Signature', [
@@ -59,6 +58,7 @@ class SpikeService
         'signature' => $signature
     ];
 
+    dd( $payload );
     // Log payload
     Log::info('Request Payload', $payload);
 

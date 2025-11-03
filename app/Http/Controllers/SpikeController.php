@@ -75,51 +75,94 @@ class SpikeController extends Controller
     /**
      * Integrate provider (Fitbit, Garmin, etc.)
      */
-    public function integrateProvider(Request $request, $provider)
-    {
-        $user = auth('api')->user();
-        if (!$user) {
-            return response()->json(['error' => 'User not logged in'], 401);
+   public function integrateProvider(Request $request, $provider)
+{
+    $user = auth('api')->user();
+    if (!$user) {
+        Log::warning('Provider integration failed - User not logged in');
+        return response()->json(['error' => 'User not logged in'], 401);
+    }
+
+    Log::info('Starting provider integration', [
+        'user_id' => $user->id,
+        'provider' => $provider,
+        'has_spike_token' => !empty($user->spike_token)
+    ]);
+
+    // Get or refresh Spike token if not present
+    if (!$user->spike_token) {
+        Log::info('No existing Spike token, fetching new one', [
+            'user_id' => $user->id
+        ]);
+
+        $userId = (string) $user->id;
+        $token = $this->spikeAuth->getAccessToken($userId);
+
+        if (!$token) {
+            Log::error('Failed to get Spike access token', [
+                'user_id' => $userId
+            ]);
+            return response()->json(['error' => 'Failed to authenticate with Spike'], 401);
         }
 
-        // Get or refresh Spike token if not present
-        if (!$user->spike_token) {
-            $userId = (string) $user->id;
-            $token = $this->spikeAuth->getAccessToken($userId);
+        Log::info('Successfully obtained Spike token', [
+            'user_id' => $userId,
+            'token_length' => strlen($token)
+        ]);
 
-            if (!$token) {
-                return response()->json(['error' => 'Failed to authenticate with Spike'], 401);
-            }
+        $user->spike_token = $token;
+        $user->save();
 
-            $user->spike_token = $token;
-            $user->save();
-        }
-
-        // Validate provider
-        if (!$provider) {
-            return response()->json(['error' => 'Provider slug is required'], 400);
-        }
-
-        // Get integration URL
-        $redirectUri = $request->input('redirect_uri');
-        $state = $request->input('state');
-
-        $integrationUrl = $this->spikeAuth->getProviderIntegrationUrl(
-            $user->spike_token,
-            $provider,
-            $redirectUri,
-            $state
-        );
-
-        if (!$integrationUrl) {
-            return response()->json(['error' => 'Failed to get integration URL'], 500);
-        }
-
-        return response()->json([
-            'provider' => $provider,
-            'integration_url' => $integrationUrl
+        Log::info('Spike token saved to user', [
+            'user_id' => $userId
         ]);
     }
+
+    // Validate provider
+    if (!$provider) {
+        Log::error('Provider slug missing in request');
+        return response()->json(['error' => 'Provider slug is required'], 400);
+    }
+
+    // Get integration URL
+    $redirectUri = $request->input('redirect_uri');
+    $state = $request->input('state');
+
+    Log::info('Requesting provider integration URL', [
+        'user_id' => $user->id,
+        'provider' => $provider,
+        'redirect_uri' => $redirectUri,
+        'state' => $state
+    ]);
+
+    $integrationUrl = $this->spikeAuth->getProviderIntegrationUrl(
+        $user->spike_token,
+        $provider,
+        $redirectUri,
+        $state
+    );
+
+    if (!$integrationUrl) {
+        Log::error('Failed to get provider integration URL', [
+            'user_id' => $user->id,
+            'provider' => $provider,
+            'has_token' => !empty($user->spike_token),
+            'redirect_uri' => $redirectUri
+        ]);
+        return response()->json(['error' => 'Failed to get integration URL'], 500);
+    }
+
+    Log::info('Successfully generated integration URL', [
+        'user_id' => $user->id,
+        'provider' => $provider,
+        'url' => $integrationUrl
+    ]);
+
+    return response()->json([
+        'provider' => $provider,
+        'integration_url' => $integrationUrl
+    ]);
+}
 
     /**
      * List provider records

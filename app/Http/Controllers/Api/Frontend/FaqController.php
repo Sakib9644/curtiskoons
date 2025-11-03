@@ -7,7 +7,7 @@ use App\Models\FAQ;
 
 class FaqController extends Controller{
    public function index() {
-    $faq = FAQ::all();
+    $faq = FAQ::select('question','answer')->get();
 
     $data = ['faq' => $faq];
 

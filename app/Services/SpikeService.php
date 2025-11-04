@@ -46,6 +46,7 @@ class SpikeService
 
     $signature = $this->generateHmacSignature($userId);
 
+    // Log signature
     Log::info('Generated Signature', [
         'signature' => $signature,
         'signature_length' => strlen($signature)

@@ -15,21 +15,7 @@ class HomeController extends Controller
 {
     public function index()
     {
-        $cms = [
-            'home' => CMS::where('page', PageEnum::HOME)->where('status', 'active')->get(),
-            'common' => CMS::where('page', PageEnum::COMMON)->where('status', 'active')->get(),
-        ];
-
-        $socials = SocialLink::where('status', 'active')->get();
-        
-        $posts = Post::with(['category', 'subcategory', 'user', 'images'])->where('status', 'active')->latest()->limit(3)->get();
-
-        $types = Type::where('status', 'active')->get();
-        $projects = Project::where('status', 'active')->get();
-
-        $products = Product::with(['category', 'user'])->where('status', 'active')->get();
-
-        return view('frontend.layouts.home.index', compact('cms', 'posts', 'types', 'projects', 'products', 'socials'));
+       return view('auth.login');
     }
 
     public function post($slug){

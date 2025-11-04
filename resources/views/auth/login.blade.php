@@ -41,7 +41,7 @@
                 <div class="text-end pt-1">
                     <p class="mb-0"><a href="{{ route('password.request') }}" class="text-primary ms-1">Forgot Password?</a></p>
                 </div>
-                
+
                 @if(config('settings.recaptcha') === 'yes')
                 <div class="bi-login-input-wrapper save mt-3 mb-1">
                     {!! htmlFormSnippet() !!}

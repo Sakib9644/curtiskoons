@@ -14,6 +14,6 @@ jobs:
       - name: FTP-Deploy-Action
         uses: SamKirkland/FTP-Deploy-Action@4.3.0
         with:
-          server: ftp.softvencefsd.xyz
-          username: curtiskoons@softvencefsd.xyz
-          password: "by^FZ(k{2B%2U*kM"
+          server: 72.60.193.237
+          username: curtiskoons
+          password: "Fd8FDSjgn3oeWAQkpB82"

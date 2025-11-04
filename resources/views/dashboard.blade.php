@@ -13,12 +13,8 @@
                 </div>
             </div>
         </div>
-<<<<<<< HEAD
-    </div> 
-    
-    
-    
-=======
     </div>
->>>>>>> ea9268f876c86c8287394187df2a53a04dd80060
-</x-app-layout> 
+
+
+
+</x-app-layout>

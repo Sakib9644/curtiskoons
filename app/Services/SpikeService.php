@@ -37,7 +37,6 @@ class SpikeService
 
     public function getAccessToken(string $userId): ?string
 {
-    // Log inputs
     Log::info('Starting Spike Auth', [
         'user_id' => $userId,
         'app_id' => $this->appId,

@@ -20,7 +20,7 @@ class SpikeService
     }
 
     // ------------------------------------------------
-    // 🔐 HMAC Authentication
+    // 🔐 HMAC
     // ------------------------------------------------
     public function generateHmacSignature(string $userId): string
     {

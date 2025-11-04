@@ -20,7 +20,7 @@ class SpikeService
     }
 
     // ------------------------------------------------
-    // 🔐 HMAC
+    // 🔐 HMAC Authentication
     // ------------------------------------------------
     public function generateHmacSignature(string $userId): string
     {
@@ -37,6 +37,7 @@ class SpikeService
 
     public function getAccessToken(string $userId): ?string
 {
+    // Log inputs
     Log::info('Starting Spike Auth', [
         'user_id' => $userId,
         'app_id' => $this->appId,
@@ -45,6 +46,7 @@ class SpikeService
 
     $signature = $this->generateHmacSignature($userId);
 
+    // Log signature
     Log::info('Generated Signature', [
         'signature' => $signature,
         'signature_length' => strlen($signature)

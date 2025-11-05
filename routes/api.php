@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\Frontend\SettingsController;
 use App\Http\Controllers\Api\Frontend\SocialLinksController;
 use App\Http\Controllers\Api\Frontend\SubscriberController;
+use App\Http\Controllers\Api\StaticContentController;
 use App\Http\Controllers\SpikeController;
 use Illuminate\Support\Facades\Route;
 
@@ -155,3 +156,15 @@ Route::prefix('spike')->name('spike.')->group(function () {
     Route::get('/timeseries', [SpikeController::class, 'getTimeSeries'])->name('timeseries');
 });
 
+Route::prefix('static-content')->group(function () {
+
+    // Routes that require authentication
+    Route::middleware('auth:api')->group(function () {
+        Route::post('/', [StaticContentController::class, 'create']);       // Create new content
+        Route::put('/{type}', [StaticContentController::class, 'update']);  // Update content by type
+    });
+
+    // Public routes
+    Route::get('/{type}', [StaticContentController::class, 'getContent']); // Get content by type
+    Route::get('/', [StaticContentController::class, 'getAll']);           // Get all content
+});

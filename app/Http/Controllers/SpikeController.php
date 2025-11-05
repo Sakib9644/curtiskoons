@@ -223,7 +223,7 @@ class SpikeController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Provider record fetched successfully',
-                'data' => $record['data']
+                'data' => $record['data'] 
             ]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Exception: ' . $e->getMessage()], 500);

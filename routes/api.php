@@ -161,7 +161,7 @@ Route::prefix('static-content')->group(function () {
     // Routes that require authentication
     Route::middleware('auth:api')->group(function () {
         Route::post('/', [StaticContentController::class, 'create']);       // Create new content
-        Route::put('/{type}', [StaticContentController::class, 'update']);  // Update content by type
+        Route::POST('/{type}', [StaticContentController::class, 'update']);  // Update content by type
     });
 
     // Public routes

@@ -6,20 +6,20 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Run the migrations.
+     */
     public function up(): void
     {
         Schema::create('term_user', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->foreignId('term_id')->constrained()->onDelete('cascade');
-            $table->boolean('accepted')->default(false);
-            $table->timestamp('accepted_at')->nullable();
             $table->timestamps();
-
-            $table->unique(['user_id', 'term_id']); // prevent duplicates
         });
     }
 
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void
     {
         Schema::dropIfExists('term_user');

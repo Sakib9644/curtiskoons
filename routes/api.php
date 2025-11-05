@@ -165,6 +165,7 @@ Route::prefix('static-content')->group(function () {
     });
 
     // Public routes
-    Route::get('/{type}', [StaticContentController::class, 'getContent']); // Get content by type
+    Route::POST('/privacy/accept', [StaticContentController::class, 'privacy']);
+     // Get content by type
     Route::get('/', [StaticContentController::class, 'getAll']);           // Get all content
 });

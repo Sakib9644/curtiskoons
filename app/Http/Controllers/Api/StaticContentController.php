@@ -80,4 +80,26 @@ class StaticContentController extends Controller
             'data' => $contents
         ]);
     }
+
+    public function privacy()
+    {
+        $user = auth('api')->user();
+
+
+        if (!$user) {
+            return response()->json([
+                'message' => 'User not authenticated',
+                'success' => false
+            ], 401);
+        }
+
+        // Update and save privacy acceptance
+        $user->is_privacy = 1;
+        $user->save();
+
+        return response()->json([
+            'message' => 'Privacy policy accepted successfully',
+            'success' => true,
+        ]);
+    }
 }

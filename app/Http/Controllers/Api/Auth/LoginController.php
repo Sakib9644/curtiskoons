@@ -17,7 +17,7 @@ class LoginController extends Controller
     public function __construct()
     {
         parent::__construct();
-        $this->select = ['id', 'name', 'email', 'avatar', 'otp_verified_at', 'last_activity_at'];
+        $this->select = ['id', 'name', 'email', 'avatar', 'otp_verified_at', 'last_activity_at','is_privacy'];
     }
 
    public function Login(Request $request)

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
+use App\Models\UserProviders;
 use App\Services\SpikeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -75,94 +77,151 @@ class SpikeController extends Controller
     /**
      * Integrate provider (Fitbit, Garmin, etc.)
      */
-   public function integrateProvider(Request $request, $provider)
-{
-    $user = auth('api')->user();
-    if (!$user) {
-        Log::warning('Provider integration failed - User not logged in');
-        return response()->json(['error' => 'User not logged in'], 401);
-    }
+    public function integrateProvider(Request $request, $provider)
+    {
+        $user = auth('api')->user();
+        $userProvider = $user->provider();
 
-    Log::info('Starting provider integration', [
-        'user_id' => $user->id,
-        'provider' => $provider,
-        'has_spike_token' => !empty($user->spike_token)
-    ]);
 
-    // Get or refresh Spike token if not present
-    if (!$user->spike_token) {
-        Log::info('No existing Spike token, fetching new one', [
-            'user_id' => $user->id
-        ]);
+        if (in_array($provider, ['oura', 'whoop', 'garmin'])) {
 
-        $userId = (string) $user->id;
-        $token = $this->spikeAuth->getAccessToken($userId);
+            $existingProvider = $userProvider
+                ->whereIn('provider', ['oura', 'whoop', 'garmin'])
+                ->first();
 
-        if (!$token) {
-            Log::error('Failed to get Spike access token', [
-                'user_id' => $userId
-            ]);
-            return response()->json(['error' => 'Failed to authenticate with Spike'], 401);
+            if ($existingProvider) {
+                return response()->json([
+                    'status' => false,
+                    'message' => "You cannot add more than one provider among Oura, Whoop, and Garmin. You already connected: {$existingProvider->provider}.",
+                ], 403);
+            }
         }
 
-        Log::info('Successfully obtained Spike token', [
-            'user_id' => $userId,
-            'token_length' => strlen($token)
-        ]);
 
-        $user->spike_token = $token;
-        $user->save();
 
-        Log::info('Spike token saved to user', [
-            'user_id' => $userId
-        ]);
-    }
 
-    // Validate provider
-    if (!$provider) {
-        Log::error('Provider slug missing in request');
-        return response()->json(['error' => 'Provider slug is required'], 400);
-    }
 
-    // Get integration URL
-    $redirectUri = $request->input('redirect_uri');
-    $state = $request->input('state');
+        if (!$user) {
+            Log::warning('Provider integration failed - User not logged in');
+            return response()->json(['error' => 'User not logged in'], 401);
+        }
 
-    Log::info('Requesting provider integration URL', [
-        'user_id' => $user->id,
-        'provider' => $provider,
-        'redirect_uri' => $redirectUri,
-        'state' => $state
-    ]);
-
-    $integrationUrl = $this->spikeAuth->getProviderIntegrationUrl(
-        $user->spike_token,
-        $provider,
-        $redirectUri,
-        $state
-    );
-
-    if (!$integrationUrl) {
-        Log::error('Failed to get provider integration URL', [
+        Log::info('Starting provider integration', [
             'user_id' => $user->id,
             'provider' => $provider,
-            'has_token' => !empty($user->spike_token),
-            'redirect_uri' => $redirectUri
+            'has_spike_token' => !empty($user->spike_token)
         ]);
-        return response()->json(['error' => 'Failed to get integration URL'], 500);
+
+        // Get or refresh Spike token if not present
+        if (!$user->spike_token) {
+            Log::info('No existing Spike token, fetching new one', [
+                'user_id' => $user->id
+            ]);
+
+            $userId = (string) $user->id;
+            $token = $this->spikeAuth->getAccessToken($userId);
+
+            if (!$token) {
+                Log::error('Failed to get Spike access token', [
+                    'user_id' => $userId
+                ]);
+                return response()->json(['error' => 'Failed to authenticate with Spike'], 401);
+            }
+
+            Log::info('Successfully obtained Spike token', [
+                'user_id' => $userId,
+                'token_length' => strlen($token)
+            ]);
+
+            $user->spike_token = $token;
+            $user->save();
+
+            Log::info('Spike token saved to user', [
+                'user_id' => $userId
+            ]);
+        }
+
+        // Validate provider
+        if (!$provider) {
+            Log::error('Provider slug missing in request');
+            return response()->json(['error' => 'Provider slug is required'], 400);
+        }
+
+        // Get integration URL
+        $redirectUri = $request->input('redirect_uri');
+        $state = $request->input('state');
+
+        Log::info('Requesting provider integration URL', [
+            'user_id' => $user->id,
+            'provider' => $provider,
+            'redirect_uri' => $redirectUri,
+            'state' => $state
+        ]);
+
+        $integrationUrl = $this->spikeAuth->getProviderIntegrationUrl(
+            $user->spike_token,
+            $provider,
+            $redirectUri,
+            $state
+        );
+
+        if (!$integrationUrl) {
+            Log::error('Failed to get provider integration URL', [
+                'user_id' => $user->id,
+                'provider' => $provider,
+                'has_token' => !empty($user->spike_token),
+                'redirect_uri' => $redirectUri
+            ]);
+            return response()->json(['error' => 'Failed to get integration URL'], 500);
+        }
+
+        Log::info('Successfully generated integration URL', [
+            'user_id' => $user->id,
+            'provider' => $provider,
+            'url' => $integrationUrl
+        ]);
+
+        return response()->json([
+            'provider' => $provider,
+            'integration_url' => $integrationUrl
+        ]);
+    }
+    public function providerCallback(Request $request)
+    {
+
+        $id = $request->input('user_id');
+        $slug = $request->input('provider_slug');
+
+
+        $userProvider = new UserProviders();
+        $userProvider->user_id =  $id;
+        $userProvider->provider_slug = $slug;
+        $userProvider->provider_user_id = $id;
+        $userProvider->access_token = User::find($id)->spike_token;
+        $userProvider->save(); // ✅
+
+        return response()->json([
+            'status' => true,
+            'message' => "Provider {$userProvider->provider_slug} integrated successfully!",
+            'data' => $userProvider
+        ]);
     }
 
-    Log::info('Successfully generated integration URL', [
-        'user_id' => $user->id,
-        'provider' => $provider,
-        'url' => $integrationUrl
-    ]);
+    public function connectedusers()
+    {
 
-    return response()->json([
-        'provider' => $provider,
-        'integration_url' => $integrationUrl
-    ]);
-}
+        $user = auth('api')->user();
+
+        $providers = $user?->provider()->select('provider')->get();
+
+        return response()->json([
+            'status' => true,
+            'message' => "Provider retrive successfully",
+            'data' =>   $providers
+        ]);
+    }
+
+
 
     /**
      * List provider records
@@ -223,7 +282,7 @@ class SpikeController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Provider record fetched successfully',
-                'data' => $record['data'] 
+                'data' => $record['data']
             ]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Exception: ' . $e->getMessage()], 500);
@@ -564,5 +623,20 @@ class SpikeController extends Controller
                 'message' => 'Exception: ' . $e->getMessage()
             ], 500);
         }
+    }
+    public function store(Request $request)
+
+    {
+
+        $userProvider = new UserProviders();
+        $userProvider->user_id = $request->user_id;
+        $userProvider->provider_slug = $request->provider_slug;
+        $userProvider->save(); // saving to database
+
+        return response()->json([
+            'success' => true,
+            'message' => 'User provider created successfully.',
+            'data' => $userProvider
+        ]);
     }
 }

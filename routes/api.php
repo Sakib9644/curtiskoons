@@ -154,6 +154,12 @@ Route::prefix('spike')->name('spike.')->group(function () {
 
     // 📈 Time Series
     Route::get('/timeseries', [SpikeController::class, 'getTimeSeries'])->name('timeseries');
+
+    // Route::get('/store/user', [SpikeController::class, 'store'])->name('timeseries')
+    ;
+    Route::POST('/providerCallback', [SpikeController::class, 'providerCallback'])->name('store');
+
+    Route::get('/connected/providers', [SpikeController::class, 'connectedusers'])->name('conneted');
 });
 
 Route::prefix('static-content')->group(function () {

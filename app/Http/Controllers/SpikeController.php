@@ -195,7 +195,7 @@ class SpikeController extends Controller
 
         $userProvider = new UserProviders();
         $userProvider->user_id =  $id;
-        $userProvider->provider_slug = $slug;
+        $userProvider->provider = $slug;
         $userProvider->provider_user_id = $id;
         $userProvider->access_token = User::find($id)->spike_token;
         $userProvider->save(); // ✅

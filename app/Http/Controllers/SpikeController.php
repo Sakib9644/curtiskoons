@@ -187,25 +187,53 @@ class SpikeController extends Controller
         ]);
     }
     public function providerCallback(Request $request)
-    {
+{
+    $id = $request->input('user_id');
+    $slug = $request->input('provider_slug');
 
-        $id = $request->input('user_id');
-        $slug = $request->input('provider_slug');
-
-
-        $userProvider = new UserProviders();
-        $userProvider->user_id =  $id;
-        $userProvider->provider = $slug;
-        $userProvider->provider_user_id = $id;
-        $userProvider->access_token = User::find($id)->spike_token;
-        $userProvider->save(); // ✅
-
+    $user = User::find($id);
+    if (!$user) {
         return response()->json([
-            'status' => true,
-            'message' => "Provider {$userProvider->provider_slug} integrated successfully!",
-            'data' => $userProvider
-        ]);
+            'status' => false,
+            'message' => "User not found"
+        ], 404);
     }
+
+    // Special handling for Oura, Whoop, Garmin
+    if (in_array($slug, ['oura', 'whoop', 'garmin'])) {
+        // Check if user already has any of these three
+        $existingProvider = UserProviders::where('user_id', $id)
+            ->whereIn('provider', ['oura', 'whoop', 'garmin'])
+            ->first();
+
+        if ($existingProvider) {
+            // Update the existing record to the new provider
+            $existingProvider->provider = $slug;
+            $existingProvider->provider_user_id = $id;
+            $existingProvider->access_token = $user->spike_token;
+            $existingProvider->save();
+
+            return response()->json([
+                'status' => true,
+                'message' => "Provider {$slug} updated successfully!",
+                'data' => $existingProvider
+            ]);
+        }
+    }
+
+    // Normal insert/update for other providers
+    $userProvider = UserProviders::updateOrCreate(
+        ['user_id' => $id, 'provider' => $slug],
+        ['provider_user_id' => $id, 'access_token' => $user->spike_token]
+    );
+
+    return response()->json([
+        'status' => true,
+        'message' => "Provider {$slug} integrated successfully!",
+        'data' => $userProvider
+    ]);
+}
+
 
     public function connectedusers()
     {

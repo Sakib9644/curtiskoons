@@ -284,7 +284,6 @@ class SpikeController extends Controller
     }
 
     /**
-     * Get single provider record by ID
      */
     public function getProviderRecord($recordId)
     {

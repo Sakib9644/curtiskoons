@@ -188,49 +188,42 @@ class SpikeController extends Controller
     }
     public function providerCallback(Request $request)
 {
-    $id = $request->input('user_id');
-    $slug = $request->input('provider_slug');
+    // Get request data
+    $id     = $request->input('user_id');             // User ID from request
+    $slug   = $request->input('provider_slug');      // Provider slug from request
 
+    // Find user in database
     $user = User::find($id);
     if (!$user) {
         return response()->json([
-            'status' => false,
-            'message' => "User not found"
+            'status'  => false,
+            'message' => 'User not found'
         ], 404);
     }
 
-    // Special handling for Oura, Whoop, Garmin
-    if (in_array($slug, ['oura', 'whoop', 'garmin'])) {
-        // Check if user already has any of these three
-        $existingProvider = UserProviders::where('user_id', $id)
-            ->whereIn('provider', ['oura', 'whoop', 'garmin'])
-            ->first();
+    // Set values for provider_user_id and access_token
+    // In your case, provider_user_id = user id
+    // access_token = spike_token stored in user table
+    $providerUserId = $id;
+    $accessToken    = $user->spike_token;
 
-        if ($existingProvider) {
-            // Update the existing record to the new provider
-            $existingProvider->provider = $slug;
-            $existingProvider->provider_user_id = $id;
-            $existingProvider->access_token = $user->spike_token;
-            $existingProvider->save();
-
-            return response()->json([
-                'status' => true,
-                'message' => "Provider {$slug} updated successfully!",
-                'data' => $existingProvider
-            ]);
-        }
-    }
-
-    // Normal insert/update for other providers
-    $userProvider = UserProviders::updateOrCreate(
-        ['user_id' => $id, 'provider' => $slug],
-        ['provider_user_id' => $id, 'access_token' => $user->spike_token]
+    // Update existing provider or create new one
+    $provider = UserProviders::updateOrCreate(
+        [
+            'user_id'  => $id,       // search by user
+            'provider' => $slug      // search by provider
+        ],
+        [
+            'provider_user_id' => $providerUserId,  // value to update/save
+            'access_token'     => $accessToken      // value to update/save
+        ]
     );
 
+    // Return response
     return response()->json([
-        'status' => true,
-        'message' => "Provider {$slug} integrated successfully!",
-        'data' => $userProvider
+        'status'  => true,
+        'message' => "Provider {$slug} saved successfully!",
+        'data'    => $provider
     ]);
 }
 

@@ -311,7 +311,6 @@ class SpikeController extends Controller
     }
 
     /**
-     * Get Spike user info
      */
     public function getUserInfo()
     {

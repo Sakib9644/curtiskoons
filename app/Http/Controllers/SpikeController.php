@@ -219,7 +219,6 @@ class SpikeController extends Controller
         ]
     );
 
-    // Return response
     return response()->json([
         'status'  => true,
         'message' => "Provider {$slug} saved successfully!",

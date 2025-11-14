@@ -33,7 +33,6 @@ class SpikeController extends Controller
     }
 
     /**
-     * Helper to extract all repeated query parameters (handles multiple values without [] notation)
      */
     private function getRepeatedQueryParam(Request $request, string $key): array
     {
@@ -188,11 +187,9 @@ class SpikeController extends Controller
     }
     public function providerCallback(Request $request)
 {
-    // Get request data
     $id     = $request->input('user_id');             // User ID from request
     $slug   = $request->input('provider_slug');      // Provider slug from request
 
-    // Find user in database
     $user = User::find($id);
     if (!$user) {
         return response()->json([
@@ -201,13 +198,10 @@ class SpikeController extends Controller
         ], 404);
     }
 
-    // Set values for provider_user_id and access_token
-    // In your case, provider_user_id = user id
-    // access_token = spike_token stored in user table
     $providerUserId = $id;
     $accessToken    = $user->spike_token;
 
-    // Update existing provider or create new one
+
     $provider = UserProviders::updateOrCreate(
         [
             'user_id'  => $id,       // search by user

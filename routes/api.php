@@ -23,6 +23,8 @@ use App\Http\Controllers\Api\StaticContentController;
 use App\Http\Controllers\SpikeController;
 use Illuminate\Support\Facades\Route;
 
+use Illuminate\Http\Request;
+
 
 //page
 Route::get('/page/home', [HomeController::class, 'index']);
@@ -119,6 +121,12 @@ Route::prefix('cms')->name('cms.')->group(function () {
 });
 
 
+Route::post('/webhook/lab-reports', function(Request $request) {
+    $data = $request->all(); // get live data
+    // Process the lab report data here
+    \Log::info('Webhook received:', $data);
+    return response()->json(['success' => true]);
+});
 
 
 Route::prefix('spike')->name('spike.')->group(function () {

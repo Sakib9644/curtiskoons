@@ -22,8 +22,9 @@ class SpikeWebhookController extends Controller
         $body = $request->getContent();
         $calculatedSignature = hash_hmac('sha256', $body, $this->hmacKey);
 
+        Log::info('webhook recived
+        ');
         if ($signature !== $calculatedSignature) {
-            Log::warning('Spike webhook invalid signature');
             return response('Unauthorized', 401);
         }
 

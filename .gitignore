@@ -5,7 +5,6 @@
 /public/uploads
 /public/backend
 /public/frontend
-/public/frontend
 /storage/*.key
 /storage/pail
 /vendor

@@ -235,46 +235,173 @@ class SpikeController extends Controller
         ]);
     }
 
+   public function listProviderRecords(Request $request)
+{
+    try {
+        $user = auth('api')->user();
+        if (!$user || !$user->spike_token) {
+            return response()->json(['success' => false, 'message' => 'User not authenticated with Spike'], 401);
+        }
 
+        $fromTimestamp = $request->input('from_timestamp');
+        if (!$fromTimestamp) {
+            return response()->json(['success' => false, 'message' => 'from_timestamp is required'], 422);
+        }
+
+        $records = $this->spikeAuth->getProviderRecords(
+            $user->spike_token,
+            $fromTimestamp,
+            $request->input('to_timestamp', now()->toIso8601String()),
+            $this->getRepeatedQueryParam($request, 'providers'),
+            $this->getRepeatedQueryParam($request, 'metrics'),
+            $request->boolean('include_provider_specific_metrics', true)
+        );
+
+        $rawRecords = $records['records'] ?? [];
+
+        if (empty($rawRecords)) {
+            return response()->json([
+                'success' => true,
+                'message' => 'No records found',
+                'data' => []
+            ]);
+        }
+
+        $summary = [
+            'date' => null,
+            'HRV' => null,
+            'HRV_status' => 'N/A',
+            'RHR' => null,
+            'RHR_status' => 'N/A',
+            'Sleep_hours' => null,
+            'Sleep_status' => 'N/A',
+            'Steps' => 0,
+            'Steps_status' => 'N/A',
+            'provider_slug' => null,
+        ];
+
+        $stepsByDate = []; // total steps per day
+        $lastDate = null;
+
+        // First, find last date
+        foreach ($rawRecords as $record) {
+            $date = $record['provider_local_date'] ?? null;
+            if (!$lastDate || $date > $lastDate) $lastDate = $date;
+
+            // sum steps for this date
+            if (isset($record['metrics']['steps'])) {
+                $stepsByDate[$date] = ($stepsByDate[$date] ?? 0) + $record['metrics']['steps'];
+            }
+
+            // first provider slug
+            if (!$summary['provider_slug'] && isset($record['provider_slug'])) {
+                $summary['provider_slug'] = $record['provider_slug'];
+            }
+        }
+
+        $summary['date'] = $lastDate;
+
+        // Last day's HRV, RHR, Sleep
+        foreach ($rawRecords as $record) {
+            if (($record['provider_local_date'] ?? null) !== $lastDate) continue;
+
+            $metrics = $record['metrics'] ?? [];
+
+            // HRV
+            if (isset($metrics['hrv_rmssd'])) {
+                $summary['HRV'] = $metrics['hrv_rmssd'];
+                $hrv = $metrics['hrv_rmssd'];
+                if ($hrv < 30) $summary['HRV_status'] = 'Poor';
+                elseif ($hrv <= 60) $summary['HRV_status'] = 'Good';
+                else $summary['HRV_status'] = 'Excellent';
+            }
+
+            // RHR
+            if (isset($metrics['heartrate_resting'])) {
+                $summary['RHR'] = $metrics['heartrate_resting'];
+                $rhr = $metrics['heartrate_resting'];
+                if ($rhr < 55) $summary['RHR_status'] = 'Excellent';
+                elseif ($rhr <= 65) $summary['RHR_status'] = 'Good';
+                else $summary['RHR_status'] = 'Poor';
+            }
+
+            // Sleep
+            if (isset($metrics['sleep_duration'])) {
+                $hours = $metrics['sleep_duration'] / (1000 * 60 * 60);
+                $summary['Sleep_hours'] = round($hours, 1);
+                if ($hours < 6) $summary['Sleep_status'] = 'Poor';
+                elseif ($hours < 8) $summary['Sleep_status'] = 'Good';
+                elseif ($hours < 9) $summary['Sleep_status'] = 'Optimal';
+                else $summary['Sleep_status'] = 'Excellent';
+            }
+        }
+
+        // Average steps across all days
+        $numDays = count($stepsByDate);
+        if ($numDays > 0) {
+            $totalSteps = array_sum($stepsByDate);
+            $summary['Steps'] = round($totalSteps / $numDays);
+        }
+
+        // Steps status
+        $steps = $summary['Steps'];
+        if ($steps < 5000) $summary['Steps_status'] = 'Poor';
+        elseif ($steps < 8000) $summary['Steps_status'] = 'Good';
+        elseif ($steps < 12000) $summary['Steps_status'] = 'Optimal';
+        else $summary['Steps_status'] = 'Excellent';
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Provider daily summary fetched successfully',
+            'data' => $summary
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Exception: ' . $e->getMessage()
+        ], 500);
+    }
+}
 
     /**
      * List provider records
      */
-    public function listProviderRecords(Request $request)
-    {
-        try {
-            $user = auth('api')->user();
-            if (!$user || !$user->spike_token) {
-                return response()->json(['success' => false, 'message' => 'User not authenticated with Spike'], 401);
-            }
+    // public function listProviderRecords(Request $request)
+    // {
+    //     try {
+    //         $user = auth('api')->user();
+    //         if (!$user || !$user->spike_token) {
+    //             return response()->json(['success' => false, 'message' => 'User not authenticated with Spike'], 401);
+    //         }
 
-            $fromTimestamp = $request->input('from_timestamp');
-            if (!$fromTimestamp) {
-                return response()->json(['success' => false, 'message' => 'from_timestamp is required'], 422);
-            }
+    //         $fromTimestamp = $request->input('from_timestamp');
+    //         if (!$fromTimestamp) {
+    //             return response()->json(['success' => false, 'message' => 'from_timestamp is required'], 422);
+    //         }
 
-            $records = $this->spikeAuth->getProviderRecords(
-                $user->spike_token,
-                $fromTimestamp,
-                $request->input('to_timestamp', now()->toIso8601String()),
-                $this->getRepeatedQueryParam($request, 'providers'),
-                $this->getRepeatedQueryParam($request, 'metrics'),
-                $request->boolean('include_provider_specific_metrics', true)
-            );
+    //         $records = $this->spikeAuth->getProviderRecords(
+    //             'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiIxMTQwMCIsInN1YiI6IjQwIn0.I7JbxPFoGrtXoh9IwQyByJ-PB9P7CjEG-po8RhEavrU',
+    //             $fromTimestamp,
+    //             $request->input('to_timestamp', now()->toIso8601String()),
+    //             $this->getRepeatedQueryParam($request, 'providers'),
+    //             $this->getRepeatedQueryParam($request, 'metrics'),
+    //             $request->boolean('include_provider_specific_metrics', true)
+    //         );
 
-            if ($records === false) {
-                return response()->json(['success' => false, 'message' => 'Failed to fetch provider records'], 500);
-            }
+    //         if ($records === false) {
+    //             return response()->json(['success' => false, 'message' => 'Failed to fetch provider records'], 500);
+    //         }
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Provider records fetched successfully',
-                'data' => $records
-            ]);
-        } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Exception: ' . $e->getMessage()], 500);
-        }
-    }
+    //         return response()->json([
+    //             'success' => true,
+    //             'message' => 'Provider records fetched successfully',
+    //             'data' => $records
+    //         ]);
+    //     } catch (\Exception $e) {
+    //         return response()->json(['success' => false, 'message' => 'Exception: ' . $e->getMessage()], 500);
+    //     }
+    // }
 
     /**
      */

@@ -121,7 +121,7 @@ Route::prefix('cms')->name('cms.')->group(function () {
 });
 
 
-Route::post('/webhook/lab-reports', function(Request $request) {
+Route::post('data', function(Request $request) {
     $data = $request->all(); // get live data
     // Process the lab report data here
     \Log::info('Webhook received:', $data);

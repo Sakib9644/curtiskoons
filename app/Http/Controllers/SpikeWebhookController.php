@@ -18,6 +18,7 @@ class SpikeWebhookController extends Controller
 
     public function handle(Request $request)
     {
+        Log::info($request);
         $signature = $request->header('X-Body-Signature');
         $body = $request->getContent();
         $calculatedSignature = hash_hmac('sha256', $body, $this->hmacKey);

@@ -21,6 +21,7 @@ use App\Http\Controllers\Api\Frontend\SocialLinksController;
 use App\Http\Controllers\Api\Frontend\SubscriberController;
 use App\Http\Controllers\Api\StaticContentController;
 use App\Http\Controllers\SpikeController;
+use App\Http\Controllers\SpikeWebhookController;
 use Illuminate\Support\Facades\Route;
 
 use Illuminate\Http\Request;
@@ -121,12 +122,8 @@ Route::prefix('cms')->name('cms.')->group(function () {
 });
 
 
-Route::post('data', function(Request $request) {
-    $data = $request->all(); // get live data
-    // Process the lab report data here
-    \Log::info('Webhook received:', $data);
-    return response()->json(['success' => true]);
-});
+Route::post('/webhook/spike', [SpikeWebhookController::class, 'handle']);
+
 
 
 Route::prefix('spike')->name('spike.')->group(function () {

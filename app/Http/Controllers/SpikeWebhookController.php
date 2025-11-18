@@ -18,12 +18,16 @@ class SpikeWebhookController extends Controller
 
     public function handle(Request $request)
     {
-        Log::info($request);
+      $data = $request->all(); // get live data
+    // Process the lab report data here
+    \Log::info('Webhook received:', $data);
+    
+    return response()->json(['success' => true]);
         $signature = $request->header('X-Body-Signature');
         $body = $request->getContent();
         $calculatedSignature = hash_hmac('sha256', $body, $this->hmacKey);
 
-       
+
         if ($signature !== $calculatedSignature) {
             return response('Unauthorized', 401);
         }

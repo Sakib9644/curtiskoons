@@ -121,9 +121,7 @@ Route::prefix('cms')->name('cms.')->group(function () {
     Route::get('home', [HomeController::class, 'index'])->name('home');
 });
 
-
 Route::post('/webhook/spike', [SpikeWebhookController::class, 'handle']);
-
 
 
 Route::prefix('spike')->name('spike.')->group(function () {

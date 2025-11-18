@@ -125,6 +125,9 @@ Route::post('/webhook/spike', function (Request $request) {
     // Get all incoming data
     $data = $request->all();
 
+    // Log the data to storage/logs/laravel.log
+    Log::info('Spike Webhook Received:', $data);
+
     // Return it immediately as JSON
     return response()->json([
         'success' => true,

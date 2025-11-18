@@ -234,8 +234,7 @@ class SpikeController extends Controller
             'data' =>   $providers
         ]);
     }
-
-   public function listProviderRecords(Request $request)
+public function listProviderRecords(Request $request)
 {
     try {
         $user = auth('api')->user();
@@ -249,7 +248,7 @@ class SpikeController extends Controller
         }
 
         $records = $this->spikeAuth->getProviderRecords(
-            $user->spike_token,
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiIxMTQwMCIsInN1YiI6IjQxIn0.DMl-1FGSYcSul346MNlwW27gyTdTpHSLGtvkuE0-RyM',
             $fromTimestamp,
             $request->input('to_timestamp', now()->toIso8601String()),
             $this->getRepeatedQueryParam($request, 'providers'),
@@ -267,8 +266,32 @@ class SpikeController extends Controller
             ]);
         }
 
+        // Collect all dates
+        $dates = [];
+        foreach ($rawRecords as $record) {
+            if (!empty($record['provider_local_date'])) {
+                $dates[] = $record['provider_local_date'];
+            }
+        }
+
+        // Remove duplicates and sort
+        $dates = array_unique($dates);
+        sort($dates);
+
+        // Get latest and previous date
+        $lastDate = end($dates); // latest date
+        $previousDate = $dates[count($dates) - 2] ?? null; // last date before latest
+
+        if (!$previousDate) {
+            return response()->json([
+                'success' => true,
+                'message' => 'No previous date data found',
+                'data' => []
+            ]);
+        }
+
         $summary = [
-            'date' => null,
+            'date' => $previousDate,
             'HRV' => null,
             'HRV_status' => 'N/A',
             'RHR' => null,
@@ -280,32 +303,18 @@ class SpikeController extends Controller
             'provider_slug' => null,
         ];
 
-        $stepsByDate = []; // total steps per day
-        $lastDate = null;
+        $stepsByDate = [];
 
-        // First, find last date
+        // Filter records for previous date
         foreach ($rawRecords as $record) {
-            $date = $record['provider_local_date'] ?? null;
-            if (!$lastDate || $date > $lastDate) $lastDate = $date;
+            if (($record['provider_local_date'] ?? null) !== $previousDate) continue;
 
-            // sum steps for this date
-            if (isset($record['metrics']['steps'])) {
-                $stepsByDate[$date] = ($stepsByDate[$date] ?? 0) + $record['metrics']['steps'];
-            }
+            $metrics = $record['metrics'] ?? [];
 
-            // first provider slug
+            // Provider slug
             if (!$summary['provider_slug'] && isset($record['provider_slug'])) {
                 $summary['provider_slug'] = $record['provider_slug'];
             }
-        }
-
-        $summary['date'] = $lastDate;
-
-        // Last day's HRV, RHR, Sleep
-        foreach ($rawRecords as $record) {
-            if (($record['provider_local_date'] ?? null) !== $lastDate) continue;
-
-            $metrics = $record['metrics'] ?? [];
 
             // HRV
             if (isset($metrics['hrv_rmssd'])) {
@@ -334,14 +343,15 @@ class SpikeController extends Controller
                 elseif ($hours < 9) $summary['Sleep_status'] = 'Optimal';
                 else $summary['Sleep_status'] = 'Excellent';
             }
+
+            // Steps
+            if (isset($metrics['steps'])) {
+                $stepsByDate[$previousDate] = ($stepsByDate[$previousDate] ?? 0) + $metrics['steps'];
+            }
         }
 
-        // Average steps across all days
-        $numDays = count($stepsByDate);
-        if ($numDays > 0) {
-            $totalSteps = array_sum($stepsByDate);
-            $summary['Steps'] = round($totalSteps / $numDays);
-        }
+        // Calculate steps average for previous date (just that date)
+        $summary['Steps'] = $stepsByDate[$previousDate] ?? 0;
 
         // Steps status
         $steps = $summary['Steps'];
@@ -352,7 +362,7 @@ class SpikeController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Provider daily summary fetched successfully',
+            'message' => 'Previous date summary fetched successfully',
             'data' => $summary
         ]);
 
@@ -363,6 +373,7 @@ class SpikeController extends Controller
         ], 500);
     }
 }
+
 
     /**
      * List provider records

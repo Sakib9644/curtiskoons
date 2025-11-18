@@ -248,7 +248,7 @@ public function listProviderRecords(Request $request)
         }
 
         $records = $this->spikeAuth->getProviderRecords(
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiIxMTQwMCIsInN1YiI6IjQxIn0.DMl-1FGSYcSul346MNlwW27gyTdTpHSLGtvkuE0-RyM',
+            $user->spike_token,
             $fromTimestamp,
             $request->input('to_timestamp', now()->toIso8601String()),
             $this->getRepeatedQueryParam($request, 'providers'),

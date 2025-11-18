@@ -121,8 +121,16 @@ Route::prefix('cms')->name('cms.')->group(function () {
     Route::get('home', [HomeController::class, 'index'])->name('home');
 });
 
-Route::post('/webhook/spike', [SpikeWebhookController::class, 'handle']);
+Route::post('/webhook/spike', function (Request $request) {
+    // Get all incoming data
+    $data = $request->all();
 
+    // Return it immediately as JSON
+    return response()->json([
+        'success' => true,
+        'received_data' => $data
+    ]);
+});
 
 Route::prefix('spike')->name('spike.')->group(function () {
     // 🔐 Authentication

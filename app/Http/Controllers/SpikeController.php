@@ -279,28 +279,16 @@ public function listProviderRecords(Request $request)
         $dates = array_keys($recordsByDate);
         sort($dates);
 
-        // Find the most recent date where ALL metrics exist
-        $requiredMetrics = ['hrv_rmssd', 'heartrate_resting', 'sleep_duration', 'steps'];
+        // Find the most recent date with valid metrics (today or previous days)
         $selectedDate = null;
-
         foreach (array_reverse($dates) as $date) { // newest first
-            $allMetricsPresent = false;
-
             foreach ($recordsByDate[$date] as $record) {
                 $metrics = $record['metrics'] ?? [];
-
-                // Check if all required metrics exist and are non-zero
-                $allMetricsPresent = true;
-                foreach ($requiredMetrics as $key) {
-                    if (empty($metrics[$key]) || $metrics[$key] == 0) {
-                        $allMetricsPresent = false;
-                        break;
+                foreach (['hrv_rmssd', 'heartrate_resting', 'sleep_duration', 'steps'] as $key) {
+                    if (!empty($metrics[$key]) && $metrics[$key] != 0) {
+                        $selectedDate = $date;
+                        break 3; // found valid metrics, stop all loops
                     }
-                }
-
-                if ($allMetricsPresent) {
-                    $selectedDate = $date;
-                    break 2; // stop checking other records and dates
                 }
             }
         }
@@ -365,7 +353,7 @@ public function listProviderRecords(Request $request)
 
         return response()->json([
             'success' => true,
-            'message' => $selectedDate ? 'Summary fetched successfully' : 'No date has all metrics available',
+            'message' => $selectedDate ? 'Summary fetched successfully' : 'No data available for any date',
             'data' => $summary
         ]);
 
@@ -376,7 +364,6 @@ public function listProviderRecords(Request $request)
         ], 500);
     }
 }
-
 
 
 

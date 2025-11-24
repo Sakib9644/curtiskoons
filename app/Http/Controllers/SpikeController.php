@@ -258,40 +258,44 @@ public function listProviderRecords(Request $request)
 
         $rawRecords = $records['records'] ?? [];
 
-        if (empty($rawRecords)) {
-            return response()->json([
-                'success' => true,
-                'message' => 'No records found',
-                'data' => []
-            ]);
-        }
-
-        // Collect all dates
-        $dates = [];
+        // Group records by date
+        $recordsByDate = [];
         foreach ($rawRecords as $record) {
-            if (!empty($record['provider_local_date'])) {
-                $dates[] = $record['provider_local_date'];
+            $date = $record['provider_local_date'] ?? null;
+            if ($date) {
+                $recordsByDate[$date][] = $record;
             }
         }
 
-        // Remove duplicates and sort
-        $dates = array_unique($dates);
-        sort($dates);
-
-        // Get latest and previous date
-        $lastDate = end($dates); // latest date
-        $previousDate = $dates[count($dates) - 2] ?? null; // last date before latest
-
-        if (!$previousDate) {
+        if (empty($recordsByDate)) {
             return response()->json([
                 'success' => true,
-                'message' => 'No previous date data found',
-                'data' => []
+                'message' => 'No data available for any date',
+                'data' => null
             ]);
         }
 
+        // Sort dates ascending
+        $dates = array_keys($recordsByDate);
+        sort($dates);
+
+        // Find the most recent date with valid metrics (today or previous days)
+        $selectedDate = null;
+        foreach (array_reverse($dates) as $date) { // newest first
+            foreach ($recordsByDate[$date] as $record) {
+                $metrics = $record['metrics'] ?? [];
+                foreach (['hrv_rmssd', 'heartrate_resting', 'sleep_duration', 'steps'] as $key) {
+                    if (!empty($metrics[$key]) && $metrics[$key] != 0) {
+                        $selectedDate = $date;
+                        break 3; // found valid metrics, stop all loops
+                    }
+                }
+            }
+        }
+
+        // Initialize summary with default values
         $summary = [
-            'date' => $previousDate,
+            'date' => $selectedDate,
             'HRV' => null,
             'HRV_status' => 'N/A',
             'RHR' => null,
@@ -303,66 +307,53 @@ public function listProviderRecords(Request $request)
             'provider_slug' => null,
         ];
 
-        $stepsByDate = [];
+        if ($selectedDate) {
+            $steps = 0;
 
-        // Filter records for previous date
-        foreach ($rawRecords as $record) {
-            if (($record['provider_local_date'] ?? null) !== $previousDate) continue;
+            foreach ($recordsByDate[$selectedDate] as $record) {
+                $metrics = $record['metrics'] ?? [];
 
-            $metrics = $record['metrics'] ?? [];
+                if (!$summary['provider_slug'] && isset($record['provider_slug'])) {
+                    $summary['provider_slug'] = $record['provider_slug'];
+                }
 
-            // Provider slug
-            if (!$summary['provider_slug'] && isset($record['provider_slug'])) {
-                $summary['provider_slug'] = $record['provider_slug'];
+                // HRV
+                if (!empty($metrics['hrv_rmssd'])) {
+                    $summary['HRV'] = $metrics['hrv_rmssd'];
+                    $hrv = $metrics['hrv_rmssd'];
+                    $summary['HRV_status'] = $hrv < 30 ? 'Poor' : ($hrv <= 60 ? 'Good' : 'Excellent');
+                }
+
+                // RHR
+                if (!empty($metrics['heartrate_resting'])) {
+                    $summary['RHR'] = $metrics['heartrate_resting'];
+                    $rhr = $metrics['heartrate_resting'];
+                    $summary['RHR_status'] = $rhr < 55 ? 'Excellent' : ($rhr <= 65 ? 'Good' : 'Poor');
+                }
+
+                // Sleep
+                if (!empty($metrics['sleep_duration'])) {
+                    $hours = $metrics['sleep_duration'] / (1000 * 60 * 60);
+                    $summary['Sleep_hours'] = round($hours, 1);
+                    if ($hours < 6) $summary['Sleep_status'] = 'Poor';
+                    elseif ($hours < 8) $summary['Sleep_status'] = 'Good';
+                    elseif ($hours < 9) $summary['Sleep_status'] = 'Optimal';
+                    else $summary['Sleep_status'] = 'Excellent';
+                }
+
+                // Steps
+                if (!empty($metrics['steps'])) {
+                    $steps += $metrics['steps'];
+                }
             }
 
-            // HRV
-            if (isset($metrics['hrv_rmssd'])) {
-                $summary['HRV'] = $metrics['hrv_rmssd'];
-                $hrv = $metrics['hrv_rmssd'];
-                if ($hrv < 30) $summary['HRV_status'] = 'Poor';
-                elseif ($hrv <= 60) $summary['HRV_status'] = 'Good';
-                else $summary['HRV_status'] = 'Excellent';
-            }
-
-            // RHR
-            if (isset($metrics['heartrate_resting'])) {
-                $summary['RHR'] = $metrics['heartrate_resting'];
-                $rhr = $metrics['heartrate_resting'];
-                if ($rhr < 55) $summary['RHR_status'] = 'Excellent';
-                elseif ($rhr <= 65) $summary['RHR_status'] = 'Good';
-                else $summary['RHR_status'] = 'Poor';
-            }
-
-            // Sleep
-            if (isset($metrics['sleep_duration'])) {
-                $hours = $metrics['sleep_duration'] / (1000 * 60 * 60);
-                $summary['Sleep_hours'] = round($hours, 1);
-                if ($hours < 6) $summary['Sleep_status'] = 'Poor';
-                elseif ($hours < 8) $summary['Sleep_status'] = 'Good';
-                elseif ($hours < 9) $summary['Sleep_status'] = 'Optimal';
-                else $summary['Sleep_status'] = 'Excellent';
-            }
-
-            // Steps
-            if (isset($metrics['steps'])) {
-                $stepsByDate[$previousDate] = ($stepsByDate[$previousDate] ?? 0) + $metrics['steps'];
-            }
+            $summary['Steps'] = $steps;
+            $summary['Steps_status'] = $steps < 5000 ? 'Poor' : ($steps < 8000 ? 'Good' : ($steps < 12000 ? 'Optimal' : 'Excellent'));
         }
-
-        // Calculate steps average for previous date (just that date)
-        $summary['Steps'] = $stepsByDate[$previousDate] ?? 0;
-
-        // Steps status
-        $steps = $summary['Steps'];
-        if ($steps < 5000) $summary['Steps_status'] = 'Poor';
-        elseif ($steps < 8000) $summary['Steps_status'] = 'Good';
-        elseif ($steps < 12000) $summary['Steps_status'] = 'Optimal';
-        else $summary['Steps_status'] = 'Excellent';
 
         return response()->json([
             'success' => true,
-            'message' => 'Previous date summary fetched successfully',
+            'message' => $selectedDate ? 'Summary fetched successfully' : 'No data available for any date',
             'data' => $summary
         ]);
 
@@ -373,6 +364,7 @@ public function listProviderRecords(Request $request)
         ], 500);
     }
 }
+
 
 
     /**

@@ -21,11 +21,12 @@ use App\Http\Controllers\Api\Frontend\SocialLinksController;
 use App\Http\Controllers\Api\Frontend\SubscriberController;
 use App\Http\Controllers\Api\StaticContentController;
 use App\Http\Controllers\SpikeController;
-use App\Http\Controllers\SpikeWebhookController;
+use App\Models\SpikeMetric;
+use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
 use Illuminate\Http\Request;
-
+use Illuminate\Support\Facades\Log;
 
 //page
 Route::get('/page/home', [HomeController::class, 'index']);
@@ -121,20 +122,75 @@ Route::prefix('cms')->name('cms.')->group(function () {
     Route::get('home', [HomeController::class, 'index'])->name('home');
 });
 
-Route::post('/webhook/spike', function (Request $request) {
-    // Get all incoming data
-    $data = $request->all();
 
-    // Log the data to storage/logs/laravel.log
-    Log::info('Spike Webhook Received:', $data);
 
-    // Return it immediately as JSON
-    return response()->json([
-        'success' => true,
-        'received_data' => $data
-    ]);
+Route::post('data', function(Request $request) {
+    $events = $request->json()->all();
+    Log::info('Spike webhook received:', ['data' => $events]);
+
+    if (!is_array($events)) {
+        Log::warning('Spike webhook data is not an array: ' . json_encode($events));
+        return response('Bad Request', 400);
+    }
+
+    foreach ($events as $event) {
+        $userId = $event['application_user_id'] ?? null;
+        $user = User::find($userId);
+
+        if (!$user) {
+            Log::warning('User not found for application_user_id: ' . $userId);
+            continue;
+        }
+
+        $provider = $event['provider_slug'] ?? 'unknown';
+        $eventType = $event['event_type'] ?? '';
+
+        Log::info("Processing Spike event for user {$user->id}, provider {$provider}, type {$eventType}");
+
+        // --- Only process record_change events ---
+        if ($eventType === 'record_change') {
+            $startDate = substr($event['earliest_record_start_at'] ?? '', 0, 10);
+            $endDate = substr($event['latest_record_end_at'] ?? '', 0, 10);
+
+            if (!$startDate || !$endDate) {
+                Log::warning("Invalid dates for user {$user->id}, provider {$provider}");
+                continue;
+            }
+
+            $start = new \DateTime($startDate);
+            $end = new \DateTime($endDate);
+            $metrics = $event['metrics'] ?? [];
+
+            while ($start <= $end) {
+                SpikeMetric::updateOrCreate(
+                    [
+                        'user_id' => $user->id,
+                        'provider_slug' => $provider,
+                        'date' => $start->format('Y-m-d')
+                    ],
+                    [
+                        'steps' => $metrics['steps'] ?? 0,
+                        'hrv' => $metrics['hrv_rmssd'] ?? null,
+                        'rhr' => $metrics['heartrate_resting'] ?? null,
+                        'sleep_hours' => isset($metrics['sleep_duration'])
+                            ? round($metrics['sleep_duration'] / (1000 * 60 * 60), 1)
+                            : null,
+                    ]
+                );
+
+                $start->modify('+1 day');
+            }
+
+            Log::info("Processed record_change for user {$user->id}, provider {$provider}");
+
+        } else {
+            // Just log other event types since we don't have the provider connections table
+            Log::info("Received event type {$eventType} for user {$user->id}, skipping DB update");
+        }
+    }
+
+    return response()->json(['success' => true]);
 });
-
 Route::prefix('spike')->name('spike.')->group(function () {
     // 🔐 Authentication
     Route::get('/authenticate', [SpikeController::class, 'authenticateUser'])->name('authenticate');

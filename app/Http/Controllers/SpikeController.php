@@ -267,14 +267,6 @@ public function listProviderRecords(Request $request)
             }
         }
 
-        if (empty($recordsByDate)) {
-            return response()->json([
-                'success' => true,
-                'message' => 'No data available for any date',
-                'data' => null
-            ]);
-        }
-
         // Sort dates ascending
         $dates = array_keys($recordsByDate);
         sort($dates);
@@ -293,7 +285,7 @@ public function listProviderRecords(Request $request)
             }
         }
 
-        // Initialize summary with default values
+        // Initialize summary with default values (always)
         $summary = [
             'date' => $selectedDate,
             'HRV' => null,
@@ -307,6 +299,7 @@ public function listProviderRecords(Request $request)
             'provider_slug' => null,
         ];
 
+        // Only populate summary if selectedDate exists
         if ($selectedDate) {
             $steps = 0;
 
@@ -351,9 +344,10 @@ public function listProviderRecords(Request $request)
             $summary['Steps_status'] = $steps < 5000 ? 'Poor' : ($steps < 8000 ? 'Good' : ($steps < 12000 ? 'Optimal' : 'Excellent'));
         }
 
+        // Always return the summary object
         return response()->json([
             'success' => true,
-            'message' => $selectedDate ? 'Summary fetched successfully' : 'No data available for any date',
+            'message' => $selectedDate ? 'Summary fetched successfully' : 'No valid data available, default summary returned',
             'data' => $summary
         ]);
 

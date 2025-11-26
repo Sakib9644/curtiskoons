@@ -27,15 +27,7 @@ use Illuminate\Support\Facades\Route;
                         <span class=" side-menu__label">Dashboard</span>
                     </a>
                 </li>
-                <li class="slide">
-                    <a class="side-menu__item {{  request()->routeIs('admin.setting.*') ? 'has-link active' : '' }}" data-bs-toggle="slide" href="#">
-                        <i class="fa-solid fa-chart-simple side-menu__icon"></i>
-                        <span class="side-menu__label">Reports</span><i class="angle fa fa-angle-right"></i>
-                    </a>
-                    <ul class="slide-menu">
-                        <li><a href="{{ route('admin.setting.general.index') }}" class="slide-item">General Settings</a></li>
-                    </ul>
-                </li>
+
                 <li class="slide">
                     <a class="side-menu__item {{  request()->routeIs('admin.category.*') ? 'has-link active' : '' }}" href="{{ route('admin.category.index') }}">
                         <i class="fa-solid fa-layer-group side-menu__icon"></i>
@@ -65,7 +57,7 @@ use Illuminate\Support\Facades\Route;
                         <span class="side-menu__label">Contact</span>
                     </a>
                 </li>
-          
+
                 <li class="slide">
                     <a class="side-menu__item {{  request()->routeIs('admin.chat.*') ? 'has-link active' : '' }}" href="{{ route('admin.chat.index') }}">
                         <i class="fa-brands fa-rocketchat side-menu__icon"></i>

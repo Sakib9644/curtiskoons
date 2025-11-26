@@ -65,12 +65,7 @@ use Illuminate\Support\Facades\Route;
                         <span class="side-menu__label">Contact</span>
                     </a>
                 </li>
-                <li class="slide">
-                    <a class="side-menu__item {{  request()->routeIs('acmin.subscriber.*') ? 'has-link active' : '' }}" href="{{ route('admin.subscriber.index') }}">
-                        <i class="fa-solid fa-people-group side-menu__icon"></i>
-                        <span class="side-menu__label">Subscriber</span>
-                    </a>
-                </li>
+          
                 <li class="slide">
                     <a class="side-menu__item {{  request()->routeIs('admin.chat.*') ? 'has-link active' : '' }}" href="{{ route('admin.chat.index') }}">
                         <i class="fa-brands fa-rocketchat side-menu__icon"></i>

@@ -48,60 +48,14 @@ use Illuminate\Support\Facades\Route;
                         <span class="side-menu__label">Sub Category</span>
                     </a>
                 </li>
-                <li class="slide">
-                    <a class="side-menu__item {{  request()->routeIs('admin.post.*') ? 'has-link active' : '' }}" href="{{ route('admin.post.index') }}">
-                        <i class="fa-solid fa-blog side-menu__icon"></i>
-                        <span class="side-menu__label">Post</span>
-                    </a>
-                </li>
-                <li>
-                    <h3>Ecommerce</h3>
-                </li>
-                <li class="slide">
-                    <a class="side-menu__item {{  request()->routeIs('admin.product.*') ? 'has-link active' : '' }}" href="{{ route('admin.product.index') }}">
-                        <i class="fa-solid fa-shop side-menu__icon"></i>
-                        <span class="side-menu__label">Product</span>
-                    </a>
-                </li>
-                <li class="slide">
-                    <a class="side-menu__item {{  request()->routeIs('admin.attribute.*') ? 'has-link active' : '' }}" href="{{ route('admin.attribute.index') }}">
-                        <i class="fa-solid fa-eye side-menu__icon"></i>
-                        <span class="side-menu__label">Attribute</span>
-                    </a>
-                </li>
-                <li class="slide">
-                    <a class="side-menu__item {{  request()->routeIs('admin.order.*') ? 'has-link active' : '' }}" href="{{ route('admin.order.index') }}">
-                        <i class="fa-solid fa-truck side-menu__icon"></i>
-                        <span class="side-menu__label">Order</span>
-                    </a>
-                </li>
-                <li class="slide">
-                    <a class="side-menu__item {{  request()->routeIs('admin.booking.*') ? 'has-link active' : '' }}" href="{{ route('admin.booking.index') }}">
-                        <i class="fa-solid fa-book side-menu__icon"></i>
-                        <span class="side-menu__label">Booking</span>
-                    </a>
-                </li>
+
                 <li class="slide">
                     <a class="side-menu__item {{  request()->routeIs('admin.transaction.*') ? 'has-link active' : '' }}" href="{{ route('admin.transaction.index') }}">
                         <i class="fa-solid fa-money-bill-transfer side-menu__icon"></i>
                         <span class="side-menu__label">Transaction</span>
                     </a>
                 </li>
-                <li>
-                    <h3>Portfolio</h3>
-                </li>
-                <li class="slide">
-                    <a class="side-menu__item {{  request()->routeIs('admin.type.*') ? 'has-link active' : '' }}" href="{{ route('admin.type.index') }}">
-                        <i class="fa-solid fa-list side-menu__icon"></i>
-                        <span class="side-menu__label">Type</span>
-                    </a>
-                </li>
-                <li class="slide">
-                    <a class="side-menu__item {{  request()->routeIs('admin.project.*') ? 'has-link active' : '' }}" href="{{ route('admin.project.index') }}">
-                        <i class="fa-solid fa-file side-menu__icon"></i>
-                        <span class="side-menu__label">Project</span>
-                    </a>
-                </li>
+
                 <li>
                     <h3>Components</h3>
                 </li>

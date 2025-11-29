@@ -59,6 +59,13 @@
                         <span class="side-menu__label">Supplements</span>
                     </a>
                 </li>
+                <li class="slide">
+                    <a class="side-menu__item {{ request()->routeIs('admin.twelve_week_plans.*') ? 'has-link active' : '' }}"
+                        href="{{ route('admin.twelve_week_plans.index') }}">
+                        <i class="fa-solid fa-calendar-week side-menu__icon"></i>
+                        <span class="side-menu__label">12-Week Plan</span>
+                    </a>
+                </li>
 
                 <li class="sliden {{ env('ACCESS') === false ? 'd-none' : '' }}">
                     <a class="side-menu__item {{ request()->routeIs('admin.users.*') ? 'has-link active' : '' }}"

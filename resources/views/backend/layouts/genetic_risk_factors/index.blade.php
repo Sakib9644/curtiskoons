@@ -33,7 +33,7 @@
                                     <tr>
                                         <td>{{ $loop->iteration }}</td>
                                         <td>{{ $factor->title }}</td>
-                                        <td>{{ $factor->description }}</td>
+                                        <td>{!! $factor->description !!}</td>
                                         <td>
                                             <a href="{{ route('admin.genetic_risk_factors.edit', $factor->id) }}" class="btn btn-sm btn-warning">Edit</a>
                                             <form action="{{ route('admin.genetic_risk_factors.destroy', $factor->id) }}" method="POST" style="display:inline-block;">

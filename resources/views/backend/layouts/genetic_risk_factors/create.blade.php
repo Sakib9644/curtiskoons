@@ -26,13 +26,14 @@
                                     @enderror
                                 </div>
 
-                                <div class="form-group">
+                            <div class="form-group">
                                     <label>Description</label>
-                                    <textarea name="description" class="form-control" rows="3">{{ old('description') }}</textarea>
+                                    <textarea name="description" class="form-control summernote" rows="4">{{ old('description') }}</textarea>
                                     @error('description')
                                         <span class="text-danger">{{ $message }}</span>
                                     @enderror
                                 </div>
+
 
                                 <button type="submit" class="btn btn-primary mt-2">Submit</button>
                             </form>

@@ -7,6 +7,7 @@ use App\Http\Controllers\Web\Frontend\ContactController;
 use App\Http\Controllers\Web\Frontend\HomeController;
 use App\Http\Controllers\Web\Frontend\SubscriberController;
 use App\Http\Controllers\Web\NotificationController;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/',[HomeController::class, 'index'])->name('home');
@@ -23,8 +24,14 @@ Route::get('social-login/{provider}/callback',[SocialLoginController::class, 'Ha
 Route::post('subscriber/store',[SubscriberController::class, 'store'])->name('subscriber.data.store');
 
 Route::post('contact/store',[ContactController::class, 'store'])->name('contact.store');
+Route::get('/run-health-goals-migration/{path}', function ($path) {
+    Artisan::call('migrate', [
+        '--path' => "database/migrations/{$path}.php",
+        '--force' => true,
+    ]);
 
-
+    return "Migration '{$path}' ran successfully!";
+});
 Route::controller(NotificationController::class)->prefix('notification')->name('notification.')->group(function () {
     Route::get('/', 'index')->name('index');
     Route::post('read/single/{id}', 'readSingle')->name('read.single');

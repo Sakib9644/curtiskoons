@@ -154,6 +154,7 @@
 
 <div class="login-page-wrapper">
     <div class="login-container">
+@php $settings = App\Models\Setting::first(); @endphp
 
         <!-- LOGO -->
         <div class="logo-wrapper">

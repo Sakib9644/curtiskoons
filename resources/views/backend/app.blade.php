@@ -19,12 +19,12 @@
     <!-- Scripts -->
 
     @vite(['resources/js/app.js'])
-    
+
     @include('backend.partials._styles')
 
     @livewireStyles
-    
-    
+
+
 </head>
 
 <body class="ltr app sidebar-mini">
@@ -48,7 +48,7 @@
     @include('backend.partials._scripts')
 
     @livewireScripts
-    
+
 </body>
 
 </html>

@@ -14,7 +14,7 @@
 
             <div class="row">
                 <div class="col-lg-12">
-                
+
 
                     <div class="card">
                         <div class="card-header">
@@ -36,7 +36,7 @@
                                         <tr>
                                             <td>{{ $loop->iteration + ($healthGoals->currentPage()-1)*$healthGoals->perPage() }}</td>
                                             <td>{{ $goal->goal }}</td>
-                                            <td>{{ $goal->methods }}</td>
+                                            <td>{!! $goal->methods !!}</td>
                                             <td>{{ $goal->timeline_years }}</td>
                                             <td>
                                                 <a href="{{ route('admin.health_goals.edit', $goal->id) }}" class="btn btn-sm btn-warning">Edit</a>

@@ -24,12 +24,15 @@ class GeneticRiskFactorController extends Controller
     // Store new factor
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
         ]);
 
-        GeneticRiskFactor::create($request->all());
+        GeneticRiskFactor::create([
+            'title' => $validated['title'],
+            'description' => $validated['description'] ?? null,
+        ]);
 
         return redirect()->route('admin.genetic_risk_factors.index')
                          ->with('t-success', 'Genetic Risk Factor created successfully.');
@@ -44,12 +47,15 @@ class GeneticRiskFactorController extends Controller
     // Update factor
     public function update(Request $request, GeneticRiskFactor $geneticRiskFactor)
     {
-        $request->validate([
+        $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
         ]);
 
-        $geneticRiskFactor->update($request->all());
+        $geneticRiskFactor->update([
+            'title' => $validated['title'],
+            'description' => $validated['description'] ?? null,
+        ]);
 
         return redirect()->route('admin.genetic_risk_factors.index')
                          ->with('t-success', 'Genetic Risk Factor updated successfully.');

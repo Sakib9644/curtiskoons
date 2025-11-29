@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Admin\HealthGoalController;
+use App\Http\Controllers\Admin\HealthGoalController as AdminHealthGoalController;
 use App\Http\Controllers\Web\Backend\Access\PermissionController;
 use App\Http\Controllers\Web\Backend\Access\RoleController;
 use App\Http\Controllers\Web\Backend\Access\UserController;
@@ -372,3 +374,4 @@ Route::controller(PropertyController::class)->prefix('property')->name('property
     Route::delete('/delete/{id}', 'destroy')->name('destroy');
     Route::get('/status/{id}', 'status')->name('status');
 });
+    Route::resource('health_goals', App\Http\Controllers\HealthGoalController::class);

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\HealthGoalController;
 use App\Http\Controllers\Api\Auth\SocialLoginController;
 use App\Http\Controllers\Web\Frontend\AffiliateController;
 use App\Http\Controllers\Web\Frontend\ContactController;
@@ -22,6 +23,7 @@ Route::get('social-login/{provider}/callback',[SocialLoginController::class, 'Ha
 Route::post('subscriber/store',[SubscriberController::class, 'store'])->name('subscriber.data.store');
 
 Route::post('contact/store',[ContactController::class, 'store'])->name('contact.store');
+
 
 Route::controller(NotificationController::class)->prefix('notification')->name('notification.')->group(function () {
     Route::get('/', 'index')->name('index');

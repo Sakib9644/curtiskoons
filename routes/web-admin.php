@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\GeneticRiskFactorController;
 use App\Http\Controllers\Admin\HealthGoalController;
 use App\Http\Controllers\Admin\HealthGoalController as AdminHealthGoalController;
 use App\Http\Controllers\Web\Backend\Access\PermissionController;
@@ -374,4 +375,6 @@ Route::controller(PropertyController::class)->prefix('property')->name('property
     Route::delete('/delete/{id}', 'destroy')->name('destroy');
     Route::get('/status/{id}', 'status')->name('status');
 });
-    Route::resource('health_goals', App\Http\Controllers\HealthGoalController::class);
+Route::resource('health_goals', App\Http\Controllers\HealthGoalController::class);
+Route::resource('genetic_risk_factors', GeneticRiskFactorController::class);
+    Route::resource('supplements', \App\Http\Controllers\Admin\SupplementController::class);

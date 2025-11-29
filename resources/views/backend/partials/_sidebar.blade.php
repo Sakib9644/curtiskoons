@@ -45,7 +45,21 @@
                 </li>
 
 
-            
+                <li class="slide">
+                    <a class="side-menu__item {{ request()->routeIs('admin.genetic_risk_factors.*') ? 'has-link active' : '' }}"
+                        href="{{ route('admin.genetic_risk_factors.index') }}">
+                        <i class="fa-solid fa-dna side-menu__icon"></i>
+                        <span class="side-menu__label">Genetic Risk Factors</span>
+                    </a>
+                </li>
+                <li class="slide">
+                    <a class="side-menu__item {{ request()->routeIs('admin.supplements.*') ? 'has-link active' : '' }}"
+                        href="{{ route('admin.supplements.index') }}">
+                        <i class="fa-solid fa-pills side-menu__icon"></i>
+                        <span class="side-menu__label">Supplements</span>
+                    </a>
+                </li>
+
                 <li class="sliden {{ env('ACCESS') === false ? 'd-none' : '' }}">
                     <a class="side-menu__item {{ request()->routeIs('admin.users.*') ? 'has-link active' : '' }}"
                         data-bs-toggle="slide" href="#">

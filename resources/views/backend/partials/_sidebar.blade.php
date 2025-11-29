@@ -35,13 +35,7 @@
                 <li>
                     <h3>Components</h3>
                 </li>
-                <li class="slide">
-                    <a class="side-menu__item {{ request()->routeIs('admin.contact.*') ? 'has-link active' : '' }}"
-                        href="{{ route('admin.contact.index') }}">
-                        <i class="fa-solid fa-address-card side-menu__icon"></i>
-                        <span class="side-menu__label">Contact</span>
-                    </a>
-                </li>
+    
                 <li class="slide">
                     <a class="side-menu__item {{ request()->routeIs('admin.health_goals.*') ? 'has-link active' : '' }}"
                         href="{{ route('admin.health_goals.index') }}">

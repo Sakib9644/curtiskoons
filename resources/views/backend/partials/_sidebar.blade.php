@@ -35,7 +35,7 @@
                 <li>
                     <h3>Components</h3>
                 </li>
-    
+
                 <li class="slide">
                     <a class="side-menu__item {{ request()->routeIs('admin.health_goals.*') ? 'has-link active' : '' }}"
                         href="{{ route('admin.health_goals.index') }}">
@@ -45,13 +45,7 @@
                 </li>
 
 
-                <li class="slide">
-                    <a class="side-menu__item {{ request()->routeIs('admin.chat.*') ? 'has-link active' : '' }}"
-                        href="{{ route('admin.chat.index') }}">
-                        <i class="fa-brands fa-rocketchat side-menu__icon"></i>
-                        <span class="side-menu__label">Chat</span>
-                    </a>
-                </li>
+            
                 <li class="sliden {{ env('ACCESS') === false ? 'd-none' : '' }}">
                     <a class="side-menu__item {{ request()->routeIs('admin.users.*') ? 'has-link active' : '' }}"
                         data-bs-toggle="slide" href="#">

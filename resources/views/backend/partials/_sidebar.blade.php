@@ -28,25 +28,7 @@ use Illuminate\Support\Facades\Route;
                     </a>
                 </li>
 
-                <li class="slide">
-                    <a class="side-menu__item {{  request()->routeIs('admin.category.*') ? 'has-link active' : '' }}" href="{{ route('admin.category.index') }}">
-                        <i class="fa-solid fa-layer-group side-menu__icon"></i>
-                        <span class="side-menu__label">Category</span>
-                    </a>
-                </li>
-                <li class="slide">
-                    <a class="side-menu__item {{  request()->routeIs('admin.subcategory.*') ? 'has-link active' : '' }}" href="{{ route('admin.subcategory.index') }}">
-                        <i class="fa-solid fa-list-check side-menu__icon"></i>
-                        <span class="side-menu__label">Sub Category</span>
-                    </a>
-                </li>
-
-                <li class="slide">
-                    <a class="side-menu__item {{  request()->routeIs('admin.transaction.*') ? 'has-link active' : '' }}" href="{{ route('admin.transaction.index') }}">
-                        <i class="fa-solid fa-money-bill-transfer side-menu__icon"></i>
-                        <span class="side-menu__label">Transaction</span>
-                    </a>
-                </li>
+          
 
                 <li>
                     <h3>Components</h3>
@@ -101,82 +83,8 @@ use Illuminate\Support\Facades\Route;
                         <li><a href="{{ route('admin.setting.other.index') }}" class="slide-item">Other Settings</a></li>
                     </ul>
                 </li>
-                <li class="slide">
-                    <a class="side-menu__item {{  request()->routeIs('admin.template.*') ? 'has-link active' : '' }}" data-bs-toggle="slide" href="#">
-                        <i class="fa-solid fa-synagogue side-menu__icon"></i>
-                        <span class="side-menu__label">Template</span><i class="angle fa fa-angle-right"></i>
-                    </a>
-                    <ul class="slide-menu">
-                        <li><a href="{{ route('admin.template.email.index') }}" class="slide-item">Email Template</a></li>
-                    </ul>
-                </li>
-                <li>
-                    <h3>CMS</h3>
-                </li>
-                <li class="slide">
-                    <a class="side-menu__item {{  request()->routeIs('admin.page.*') ? 'has-link active' : '' }}" href="{{ route('admin.page.index') }}">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="side-menu__icon" viewBox="0 0 16 16">
-                            <path d="M15 14l-5-5-5 5v-3l10 -10z" />
-                        </svg>
-                        <span class="side-menu__label">Dynamic Page</span>
-                    </a>
-                </li>
-                <li class="slide">
-                    <a class="side-menu__item {{  request()->routeIs('admin.social.*') ? 'has-link active' : '' }}" href="{{ route('admin.social.index') }}">
-                        <i class="fa-solid fa-link side-menu__icon"></i>
-                        <span class="side-menu__label">Social Link</span>
-                    </a>
-                </li>
-                <li class="slide">
-                    <a class="side-menu__item {{  request()->routeIs('admin.faq.*') ? 'has-link active' : '' }}" href="{{ route('admin.faq.index') }}">
-                        <i class="fa-solid fa-clipboard-question side-menu__icon"></i>
-                        <span class="side-menu__label">FAQ</span>
-                    </a>
-                </li>
 
-                <li class="slide">
-                    <a class="side-menu__item" data-bs-toggle="slide" href="#">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="side-menu__icon" viewBox="0 0 16 16">
-                            <path d="M7.5 5.5a.5.5 0 0 0-1 0v.634l-.549-.317a.5.5 0 1 0-.5.866L6 7l-.549.317a.5.5 0 1 0 .5.866l.549-.317V8.5a.5.5 0 1 0 1 0v-.634l.549.317a.5.5 0 1 0 .5-.866L8 7l.549-.317a.5.5 0 1 0-.5-.866l-.549.317zm-2 4.5a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1zm0 2a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1z" />
-                            <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2M9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5z" />
-                        </svg>
-                        <span class="side-menu__label">CMS</span><i class="angle fa fa-angle-right"></i>
-                    </a>
-                    <ul class="slide-menu">
-                        <li class="sub-slide">
-                            <a class="sub-side-menu__item" data-bs-toggle="sub-slide" href="#"><span
-                                    class="sub-side-menu__label">Home Page</span><i
-                                    class="sub-angle fa fa-angle-right"></i></a>
-                            <ul class="sub-slide-menu">
-                                <li><a href="{{ route('admin.cms.home.example.index') }}" class="sub-slide-item">Example Section</a></li>
-                                <li><a href="{{ route('admin.cms.home.intro.index') }}" class="sub-slide-item">Intro Section</a></li>
-                                <li><a href="{{ route('admin.cms.home.about.index') }}" class="sub-slide-item">About Section</a></li>
-                            </ul>
-                        </li>
-                    </ul>
-                </li>
 
-                <li class="slide">
-                    <a class="side-menu__item {{  request()->routeIs('admin.menu.*') ? 'has-link active' : '' }}" href="{{ route('admin.menu.index') }}">
-                        <i class="fa-solid fa-bars-staggered side-menu__icon"></i>
-                        <span class="side-menu__label">Menu</span>
-                    </a>
-                </li>
-                <li class="slide">
-                    <a class="side-menu__item {{  Request::routeIs('ajax.gallery.*') ? 'has-link active' : '' }}" href="{{ route('ajax.gallery.index') }}">
-                        <i class="fa-solid fa-image side-menu__icon"></i>
-                        <span class="side-menu__label">Image Gallery</span>
-                    </a>
-                </li>
-                <li>
-                    <h3>CRUD</h3>
-                </li>
-                <li class="slide">
-                    <a class="side-menu__item {{  Request::routeIs('admin.livewire.crud.*') ? 'has-link active' : '' }}" href="{{ route('admin.livewire.crud.index') }}">
-                        <i class="fa-solid fa-image side-menu__icon"></i>
-                        <span class="side-menu__label">Livewire</span>
-                    </a>
-                </li>
             </ul>
             <div class="slide-right" id="slide-right"><svg xmlns="http://www.w3.org/2000/svg"
                     fill="#7b8191" width="24" height="24" viewBox="0 0 24 24">

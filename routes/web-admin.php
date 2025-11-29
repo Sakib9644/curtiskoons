@@ -377,4 +377,5 @@ Route::controller(PropertyController::class)->prefix('property')->name('property
 });
 Route::resource('health_goals', App\Http\Controllers\HealthGoalController::class);
 Route::resource('genetic_risk_factors', GeneticRiskFactorController::class);
-    Route::resource('supplements', \App\Http\Controllers\Admin\SupplementController::class);
+Route::resource('supplements', \App\Http\Controllers\Admin\SupplementController::class);
+    Route::resource('twelve_week_plans', \App\Http\Controllers\TwelveWeekPlanController::class);

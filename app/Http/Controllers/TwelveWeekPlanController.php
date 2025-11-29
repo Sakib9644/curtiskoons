@@ -12,13 +12,13 @@ class TwelveWeekPlanController extends Controller
     public function index()
     {
         $plans = TwelveWeekPlan::orderBy('id', 'desc')->paginate(10);
-        return view('backend.twelve_week_plans.index', compact('plans'));
+        return view('backend.layouts.twelve_week_plans.index', compact('plans'));
     }
 
     // Show create form
     public function create()
     {
-        return view('backend.twelve_week_plans.create');
+        return view('backend.layouts.twelve_week_plans.create');
     }
 
     // Store new plan
@@ -35,13 +35,13 @@ class TwelveWeekPlanController extends Controller
         ]);
 
         return redirect()->route('admin.twelve_week_plans.index')
-                         ->with('success', '12-Week Plan created successfully.');
+                         ->with('t-success', '12-Week Plan created successfully.');
     }
 
     // Show edit form
     public function edit(TwelveWeekPlan $twelveWeekPlan)
     {
-        return view('backend.twelve_week_plans.edit', compact('twelveWeekPlan'));
+        return view('backend.layouts.twelve_week_plans.edit', compact('twelveWeekPlan'));
     }
 
     // Update plan
@@ -58,7 +58,7 @@ class TwelveWeekPlanController extends Controller
         ]);
 
         return redirect()->route('admin.twelve_week_plans.index')
-                         ->with('success', '12-Week Plan updated successfully.');
+                         ->with('t-success', '12-Week Plan updated successfully.');
     }
 
     // Delete plan
@@ -67,6 +67,6 @@ class TwelveWeekPlanController extends Controller
         $twelveWeekPlan->delete();
 
         return redirect()->route('admin.twelve_week_plans.index')
-                         ->with('success', '12-Week Plan deleted successfully.');
+                         ->with('t-success', '12-Week Plan deleted successfully.');
     }
 }

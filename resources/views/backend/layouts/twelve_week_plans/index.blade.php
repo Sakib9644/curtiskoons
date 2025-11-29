@@ -34,7 +34,7 @@
                                         <tr>
                                             <td>{{ $loop->iteration + ($plans->currentPage() - 1) * $plans->perPage() }}</td>
                                             <td>{{ $plan->title }}</td>
-                                            <td>{!! nl2br(e($plan->description)) !!}</td>
+                                            <td>{!! $plan->description !!}</td>
                                             <td>
                                                 <a href="{{ route('admin.twelve_week_plans.edit', $plan->id) }}" class="btn btn-sm btn-warning">Edit</a>
                                                 <form action="{{ route('admin.twelve_week_plans.destroy', $plan->id) }}" method="POST" style="display:inline-block;">

@@ -3,18 +3,58 @@
 @section('content')
 <style>
     /* PAGE WRAPPER */
+    body, html {
+        margin: 0;
+        padding: 0;
+        font-family: 'Poppins', sans-serif;
+        background: #f0f4f8;
+    }
+
     .login-page-wrapper {
         min-height: 100vh;
         display: flex;
         align-items: center;
         justify-content: center;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 20px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Animated background blobs */
+    .login-page-wrapper::before {
+        content: '';
+        position: absolute;
+        width: 600px;
+        height: 600px;
+        background: rgba(255,255,255,0.05);
+        border-radius: 50%;
+        top: -100px;
+        left: -100px;
+        animation: float 8s ease-in-out infinite;
+    }
+
+    .login-page-wrapper::after {
+        content: '';
+        position: absolute;
+        width: 400px;
+        height: 400px;
+        background: rgba(255,255,255,0.08);
+        border-radius: 50%;
+        bottom: -80px;
+        right: -80px;
+        animation: float 6s ease-in-out infinite alternate;
+    }
+
+    @keyframes float {
+        0% { transform: translateY(0) translateX(0) scale(1); }
+        50% { transform: translateY(20px) translateX(20px) scale(1.1); }
+        100% { transform: translateY(0) translateX(0) scale(1); }
     }
 
     .login-container {
         width: 100%;
         max-width: 460px;
+        z-index: 2;
     }
 
     /* LOGO */
@@ -27,37 +67,74 @@
         width: 120px;
         height: 120px;
         background: white;
-        border-radius: 20px;
-        padding: 20px;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        border-radius: 50%;
+        padding: 15px;
+        box-shadow: 0 15px 40px rgba(0,0,0,0.25);
         object-fit: contain;
+        transition: transform 0.3s;
+    }
+
+    .header-brand-img:hover {
+        transform: rotate(10deg) scale(1.05);
     }
 
     /* CARD */
     .login-card {
-        background: white;
-        border-radius: 20px;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 25px;
+        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
         overflow: hidden;
-        animation: slideUp 0.5s ease-out;
+        animation: slideUp 0.6s ease-out;
+        border: 3px solid transparent;
+        background-clip: padding-box;
+        position: relative;
+    }
+
+    .login-card::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 25px;
+        padding: 3px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: destination-out;
+        mask-composite: exclude;
+        pointer-events: none;
     }
 
     @keyframes slideUp {
-        from { opacity: 0; transform: translateY(30px); }
+        from { opacity: 0; transform: translateY(40px); }
         to { opacity: 1; transform: translateY(0); }
     }
 
     .card-header-custom {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 40px 30px;
+        padding: 50px 30px;
         text-align: center;
+        border-top-left-radius: 22px;
+        border-top-right-radius: 22px;
+        position: relative;
+    }
+
+    .card-header-custom::after {
+        content: '';
+        position: absolute;
+        bottom: -15px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 60px;
+        height: 6px;
+        background: rgba(255,255,255,0.5);
+        border-radius: 3px;
     }
 
     .login100-form-title h2 {
         color: white;
-        font-size: 28px;
+        font-size: 32px;
         font-weight: 700;
         margin: 0;
+        letter-spacing: 1px;
     }
 
     .card-body {
@@ -71,54 +148,53 @@
     }
 
     .input-label {
-        font-weight: 600;
+        font-weight: 500;
         font-size: 14px;
         margin-bottom: 8px;
         display: block;
         color: #333;
+        transition: all 0.3s;
     }
 
     .form-control-custom {
         width: 100%;
-        height: 48px;
-        padding-left: 52px;
-        padding-right: 14px;
+        height: 50px;
+        padding-left: 50px;
+        padding-right: 15px;
         background: #f8f9fa;
-        border-radius: 10px;
+        border-radius: 12px;
         border: 1px solid #d1d1d1;
         font-size: 15px;
-        transition: all .3s;
+        transition: all 0.3s;
+        outline: none;
     }
 
     .form-control-custom:focus {
         border-color: #667eea;
         background: #fff;
-        box-shadow: 0 0 6px rgba(102,126,234,0.25);
-        outline: none;
+        box-shadow: 0 0 10px rgba(102,126,234,0.25);
     }
 
-    /* ICON INSIDE INPUT */
     .input-icon {
         position: absolute;
-        left: 16px;
+        left: 15px;
         top: 50%;
         transform: translateY(-50%);
-        font-size: 19px;
-        color: #777;
+        font-size: 20px;
+        color: #999;
         pointer-events: none;
-        z-index: 3;
+        transition: all 0.3s;
     }
 
     .form-control-custom:focus ~ .input-icon {
         color: #667eea;
     }
 
-    /* ERROR */
     .text-danger {
         font-size: 13px;
-        margin-top: 4px;
+        margin-top: 5px;
         display: block;
-        color: #c33 !important;
+        color: #e74c3c !important;
     }
 
     /* FORGOT PASSWORD */
@@ -128,33 +204,39 @@
         text-decoration: none;
         font-weight: 500;
     }
-    .text-end a:hover { color: #764ba2; }
+    .text-end a:hover { color: #764ba2; text-decoration: underline; }
 
     /* BUTTON */
     .login100-form-btn {
         width: 100%;
         padding: 15px;
         border: none;
-        border-radius: 10px;
+        border-radius: 12px;
         font-size: 16px;
         font-weight: 600;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         cursor: pointer;
-        transition: 0.3s;
-        box-shadow: 0 4px 14px rgba(102, 126, 234, 0.4);
+        transition: all 0.3s;
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
     }
 
     .login100-form-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.55);
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.55);
     }
 
+    /* RESPONSIVE */
+    @media(max-width: 500px){
+        .card-body { padding: 30px 20px; }
+        .card-header-custom { padding: 40px 20px; }
+        .login100-form-title h2 { font-size: 26px; }
+    }
 </style>
 
 <div class="login-page-wrapper">
     <div class="login-container">
-@php $settings = App\Models\Setting::first(); @endphp
+        @php $settings = App\Models\Setting::first(); @endphp
 
         <!-- LOGO -->
         <div class="logo-wrapper">

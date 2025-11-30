@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\Auth\ResetPasswordController;
 use App\Http\Controllers\Api\Auth\UserController;
 use App\Http\Controllers\Api\Auth\SocialLoginController;
 use App\Http\Controllers\Api\ChatController;
+use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\FirebaseTokenController;
 use App\Http\Controllers\Api\Frontend\categoryController;
 use App\Http\Controllers\Api\Frontend\FaqController;
@@ -245,3 +246,7 @@ Route::prefix('static-content')->group(function () {
      // Get content by type
     Route::get('/', [StaticContentController::class, 'getAll']);           // Get all content
 });
+
+
+
+    Route::get('/healthgoals', [DashboardController::class, 'healthgoals']);           // Get all content

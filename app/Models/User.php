@@ -169,4 +169,9 @@ class User extends Authenticatable implements JWTSubject
     {
         return $this->belongsTo(User::class);
     }
+
+    public function healthgoals(){
+
+        return $this->hasMany(HealthGoal::class);
+    }
 }

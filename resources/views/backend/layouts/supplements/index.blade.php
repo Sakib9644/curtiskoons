@@ -10,10 +10,6 @@
                     <h1 class="page-title mb-0">Supplements</h1>
                     <a href="{{ route('admin.supplements.create') }}" class="btn btn-primary">Add New</a>
                 </div>
-
-         
-
-                {{-- Table Card --}}
                 <div class="row mt-4">
                     <div class="col-lg-12">
                         <div class="card border-0">

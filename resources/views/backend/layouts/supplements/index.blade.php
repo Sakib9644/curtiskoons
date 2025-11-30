@@ -11,7 +11,7 @@
                     <a href="{{ route('admin.supplements.create') }}" class="btn btn-primary">Add New</a>
                 </div>
 
-         f
+         
 
                 {{-- Table Card --}}
                 <div class="row mt-4">

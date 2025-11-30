@@ -1,51 +1,119 @@
 @extends('backend.app', ['title' => 'Edit Genetic Risk Factor'])
 
 @section('content')
-    <div class="app-content main-content mt-0">
-        <div class="side-app">
-            <div class="main-container container-fluid">
+<div class="app-content main-content mt-0">
+    <div class="side-app">
+        <div class="main-container container-fluid">
 
-                <div class="page-header">
-                    <h1 class="page-title">Edit Genetic Risk Factor</h1>
-                    <div class="ms-auto pageheader-btn">
-                        <a href="{{ route('admin.genetic_risk_factors.index') }}" class="btn btn-primary">Back</a>
-                    </div>
-                </div>
+            {{-- Page Header --}}
+            <div class="page-header d-flex justify-content-between align-items-center">
+                <h1 class="page-title">Edit Genetic Risk Factor</h1>
+                <a href="{{ route('admin.genetic_risk_factors.index') }}" class="btn btn-primary">Back</a>
+            </div>
 
-                <div class="row">
-                    <div class="col-lg-12">
-                        <div class="card">
-                            <div class="card-body">
-                                <form method="POST"
-                                    action="{{ route('admin.genetic_risk_factors.update', $geneticRiskFactor->id) }}">
-                                    @csrf
-                                    @method('PUT')
+            {{-- Form Card --}}
+            <div class="row justify-content-center mt-4">
+                <div class="col-lg-8">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <h4 class="mb-0">Edit Factor</h4>
+                        </div>
+                        <div class="card-body">
 
-                                    <div class="form-group">
-                                        <label>Title</label>
-                                        <input type="text" name="title" class="form-control"
-                                            value="{{ old('title', $geneticRiskFactor->title) }}" required>
-                                        @error('title')
-                                            <span class="text-danger">{{ $message }}</span>
-                                        @enderror
-                                    </div>
+                            <form method="POST" action="{{ route('admin.genetic_risk_factors.update', $geneticRiskFactor->id) }}">
+                                @csrf
+                                @method('PUT')
 
-                                    <div class="form-group">
-                                        <label>Description</label>
-                                        <textarea name="description" class="form-control summernote" rows="4">{{ old('description', $geneticRiskFactor->description) }}</textarea>
-                                        @error('description')
-                                            <span class="text-danger">{{ $message }}</span>
-                                        @enderror
-                                    </div>
+                                {{-- User Assignment --}}
+                                <div class="mb-3">
+                                    <label for="user_id" class="form-label fw-bold">Assign to User</label>
+                                    <select name="user_id" id="user_id"
+                                        class="form-control @error('user_id') is-invalid @enderror">
+                                        <option value="">-- Select User --</option>
+                                        @foreach (\App\Models\User::select('id', 'name', 'email')->get() as $user)
+                                            <option value="{{ $user->id }}" {{ $user->id == old('user_id', $geneticRiskFactor->user_id) ? 'selected' : '' }}>
+                                                {{ $user->name }} ({{ $user->email }})
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('user_id')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
 
-                                    <button type="submit" class="btn btn-primary mt-2">Update</button>
-                                </form>
-                            </div>
+                                {{-- Title --}}
+                                <div class="mb-3">
+                                    <label for="title" class="form-label fw-bold">Title</label>
+                                    <input type="text" name="title" id="title"
+                                        class="form-control @error('title') is-invalid @enderror"
+                                        value="{{ old('title', $geneticRiskFactor->title) }}" placeholder="Enter title" required>
+                                    @error('title')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                {{-- Description --}}
+                                <div class="mb-3">
+                                    <label for="description" class="form-label fw-bold">Description</label>
+                                    <textarea name="description" id="description"
+                                        class="form-control summernote @error('description') is-invalid @enderror"
+                                        rows="5" placeholder="Enter description">{{ old('description', $geneticRiskFactor->description) }}</textarea>
+                                    @error('description')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                {{-- Submit Button --}}
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-success btn-lg">
+                                        <i class="fa fa-save me-1"></i> Update Factor
+                                    </button>
+                                </div>
+
+                            </form>
+
                         </div>
                     </div>
                 </div>
-
             </div>
+
         </div>
     </div>
+</div>
 @endsection
+
+@push('scripts')
+{{-- Select2 --}}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    $('#user_id').select2({
+        width: '100%',
+        placeholder: '-- Select User --',
+        allowClear: true
+    });
+});
+</script>
+
+{{-- Summernote --}}
+<link href="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    $('.summernote').summernote({
+        height: 150,
+        placeholder: 'Enter description here...',
+        toolbar: [
+            ['style', ['bold', 'italic', 'underline', 'clear']],
+            ['font', ['strikethrough']],
+            ['para', ['ul', 'ol', 'paragraph']],
+            ['insert', ['link', 'picture']],
+            ['view', ['fullscreen', 'codeview']]
+        ]
+    });
+});
+</script>
+@endpush

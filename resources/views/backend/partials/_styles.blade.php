@@ -56,6 +56,11 @@
 
 @stack('styles')
 
+<style>
+    .select2-container {
+    width: 100% !important;
+}
+</style>
 
 <style>
     .fl-wrapper {

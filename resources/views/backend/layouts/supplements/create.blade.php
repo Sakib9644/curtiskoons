@@ -1,50 +1,115 @@
 @extends('backend.app', ['title' => 'Add Supplement'])
 
 @section('content')
-    <div class="app-content main-content mt-0">
-        <div class="side-app">
-            <div class="main-container container-fluid">
+<div class="app-content main-content mt-0">
+    <div class="side-app">
+        <div class="main-container container-fluid">
 
-                <div class="page-header">
-                    <h1 class="page-title">Add Supplement</h1>
-                    <div class="ms-auto pageheader-btn">
-                        <a href="{{ route('admin.supplements.index') }}" class="btn btn-primary">Back</a>
-                    </div>
-                </div>
+            {{-- Page Header --}}
+            <div class="page-header d-flex justify-content-between align-items-center">
+                <h1 class="page-title mb-0">Add Supplement</h1>
+                <a href="{{ route('admin.supplements.index') }}" class="btn btn-primary">Back to List</a>
+            </div>
 
-                <div class="row">
-                    <div class="col-lg-12">
-                        <div class="card">
-                            <div class="card-body">
-                                <form method="POST" action="{{ route('admin.supplements.store') }}">
-                                    @csrf
+            {{-- Form Card --}}
+            <div class="row mt-4">
+                <div class="col-lg-8 mx-auto">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-primary text-white">
+                            <h3 class="card-title mb-0">New Supplement</h3>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST" action="{{ route('admin.supplements.store') }}">
+                                @csrf
 
-                                    <div class="form-group">
-                                        <label>Name</label>
-                                        <input type="text" name="name" class="form-control"
-                                            value="{{ old('name') }}" required>
-                                        @error('name')
-                                            <span class="text-danger">{{ $message }}</span>
-                                        @enderror
-                                    </div>
+                                {{-- User Dropdown --}}
+                                <div class="mb-3">
+                                    <label for="user_id" class="form-label fw-bold">Assign to User</label>
+                                    <select name="user_id" id="user_id"
+                                        class="form-control @error('user_id') is-invalid @enderror">
+                                        <option value="">-- Select User --</option>
+                                        @foreach ($users as $user)
+                                            <option value="{{ $user->id }}" {{ old('user_id') == $user->id ? 'selected' : '' }}>
+                                                {{ $user->name }} ({{ $user->email }})
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('user_id')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
 
-                                    <div class="form-group">
-                                        <label>Dosage</label>
-                                        <textarea name="dosage" class="form-control summernote" rows="4">{{ old('dosage') }}</textarea>
-                                        @error('dosage')
-                                            <span class="text-danger">{{ $message }}</span>
-                                        @enderror
-                                    </div>
+                                {{-- Name --}}
+                                <div class="mb-3">
+                                    <label for="name" class="form-label fw-bold">Supplement Name</label>
+                                    <input type="text" name="name" id="name"
+                                        class="form-control @error('name') is-invalid @enderror"
+                                        value="{{ old('name') }}" placeholder="Enter supplement name" required>
+                                    @error('name')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
 
+                                {{-- Dosage / Description --}}
+                                <div class="mb-3">
+                                    <label for="dosage" class="form-label fw-bold">Dosage / Description</label>
+                                    <textarea name="dosage" id="dosage" rows="5"
+                                        class="form-control summernote @error('dosage') is-invalid @enderror"
+                                        placeholder="Enter dosage or description">{{ old('dosage') }}</textarea>
+                                    @error('dosage')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
 
-                                    <button type="submit" class="btn btn-primary mt-2">Submit</button>
-                                </form>
-                            </div>
+                                {{-- Submit Button --}}
+                                <div class="d-grid mt-4">
+                                    <button type="submit" class="btn btn-success btn-lg">
+                                        <i class="feather-plus-circle me-2"></i> Add Supplement
+                                    </button>
+                                </div>
+
+                            </form>
                         </div>
                     </div>
                 </div>
-
             </div>
+            {{-- /Form Card --}}
+
         </div>
     </div>
+</div>
 @endsection
+
+@push('scripts')
+{{-- Select2 --}}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+{{-- Summernote --}}
+<link href="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    // Initialize Select2
+    $('#user_id').select2({
+        width: '100%',
+        placeholder: '-- Select User --',
+        allowClear: true
+    });
+
+    // Initialize Summernote
+    $('.summernote').summernote({
+        height: 150,
+        placeholder: 'Enter dosage or description...',
+        toolbar: [
+            ['style', ['bold', 'italic', 'underline', 'clear']],
+            ['font', ['strikethrough']],
+            ['para', ['ul', 'ol', 'paragraph']],
+            ['insert', ['link', 'picture']],
+            ['view', ['fullscreen', 'codeview']]
+        ]
+    });
+});
+</script>
+@endpush

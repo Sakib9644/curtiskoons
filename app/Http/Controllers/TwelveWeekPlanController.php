@@ -5,20 +5,23 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\TwelveWeekPlan;
+use App\Models\User;
 
 class TwelveWeekPlanController extends Controller
 {
     // List all plans with pagination
     public function index()
     {
-        $plans = TwelveWeekPlan::orderBy('id', 'desc')->paginate(10);
+        $plans = TwelveWeekPlan::with('user')->orderBy('id', 'desc')->paginate(10);
         return view('backend.layouts.twelve_week_plans.index', compact('plans'));
     }
 
     // Show create form
     public function create()
     {
-        return view('backend.layouts.twelve_week_plans.create');
+        // Pass users for dropdown
+        $users = User::select('id', 'name', 'email')->get();
+        return view('backend.layouts.twelve_week_plans.create', compact('users'));
     }
 
     // Store new plan
@@ -27,12 +30,14 @@ class TwelveWeekPlanController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'user_id' => 'required|exists:users,id',
         ]);
 
-        TwelveWeekPlan::create([
-            'title' => $request->title,
-            'description' => $request->description,
-        ]);
+        $plan = new TwelveWeekPlan();
+        $plan->title = $request->title;
+        $plan->description = $request->description;
+        $plan->user_id = $request->user_id; // assign to user
+        $plan->save();
 
         return redirect()->route('admin.twelve_week_plans.index')
                          ->with('t-success', '12-Week Plan created successfully.');
@@ -41,7 +46,8 @@ class TwelveWeekPlanController extends Controller
     // Show edit form
     public function edit(TwelveWeekPlan $twelveWeekPlan)
     {
-        return view('backend.layouts.twelve_week_plans.edit', compact('twelveWeekPlan'));
+        $users = \App\Models\User::select('id', 'name', 'email')->get();
+        return view('backend.layouts.twelve_week_plans.edit', compact('twelveWeekPlan', 'users'));
     }
 
     // Update plan
@@ -50,12 +56,13 @@ class TwelveWeekPlanController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'user_id' => 'required|exists:users,id',
         ]);
 
-        $twelveWeekPlan->update([
-            'title' => $request->title,
-            'description' => $request->description,
-        ]);
+        $twelveWeekPlan->title = $request->title;
+        $twelveWeekPlan->description = $request->description;
+        $twelveWeekPlan->user_id = $request->user_id; // update user assignment
+        $twelveWeekPlan->save();
 
         return redirect()->route('admin.twelve_week_plans.index')
                          ->with('t-success', '12-Week Plan updated successfully.');

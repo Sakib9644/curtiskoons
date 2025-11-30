@@ -27,12 +27,14 @@ class GeneticRiskFactorController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'user_id' => 'required|exists:users,id',
         ]);
 
-        GeneticRiskFactor::create([
-            'title' => $validated['title'],
-            'description' => $validated['description'] ?? null,
-        ]);
+        $geneticRiskFactor = new GeneticRiskFactor();
+        $geneticRiskFactor->title = $validated['title'];
+        $geneticRiskFactor->description = $validated['description'] ?? null;
+        $geneticRiskFactor->user_id = $validated['user_id'];
+        $geneticRiskFactor->save();
 
         return redirect()->route('admin.genetic_risk_factors.index')
                          ->with('t-success', 'Genetic Risk Factor created successfully.');
@@ -50,12 +52,13 @@ class GeneticRiskFactorController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'user_id' => 'required|exists:users,id',
         ]);
 
-        $geneticRiskFactor->update([
-            'title' => $validated['title'],
-            'description' => $validated['description'] ?? null,
-        ]);
+        $geneticRiskFactor->title = $validated['title'];
+        $geneticRiskFactor->description = $validated['description'] ?? null;
+        $geneticRiskFactor->user_id = $validated['user_id'];
+        $geneticRiskFactor->save();
 
         return redirect()->route('admin.genetic_risk_factors.index')
                          ->with('t-success', 'Genetic Risk Factor updated successfully.');

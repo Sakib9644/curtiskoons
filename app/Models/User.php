@@ -111,23 +111,28 @@ class User extends Authenticatable implements JWTSubject
         return $this->hasMany(FirebaseTokens::class);
     }
 
-    public function profile() {
+    public function profile()
+    {
         return $this->hasOne(Profile::class);
     }
 
-    public function posts() {
+    public function posts()
+    {
         return $this->hasMany(Post::class);
     }
 
-    public function plan() {
+    public function plan()
+    {
         return $this->belongsTo(Plan::class);
     }
 
-    public function transactions() {
+    public function transactions()
+    {
         return $this->hasMany(Transaction::class);
     }
 
-    public function products() {
+    public function products()
+    {
         return $this->hasMany(Product::class);
     }
 
@@ -160,5 +165,8 @@ class User extends Authenticatable implements JWTSubject
     {
         return Room::where('user_one_id', $this->id)->orWhere('user_two_id', $this->id);
     }
-
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

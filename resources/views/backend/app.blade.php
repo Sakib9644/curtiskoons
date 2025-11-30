@@ -13,6 +13,7 @@
 
     <!-- FAVICON -->
     <link rel="shortcut icon" type="image/x-icon" href="{{ asset(settings()->favicon ?? 'default/logo.svg') }}" />
+        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
     <!-- TITLE -->
     <title>{{ config('app.name') }} - {{ $title ?? settings()->title ?? '' }}</title>

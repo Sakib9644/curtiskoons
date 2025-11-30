@@ -30,12 +30,19 @@ class HealthGoalController extends Controller
             'goal' => 'required|string|max:255',
             'methods' => 'nullable|string',
             'timeline_years' => 'nullable|numeric',
+            'user_id' => 'required|exists:users,id',
         ]);
 
-        HealthGoal::create($request->all());
+        $healthGoal = new HealthGoal();
+        $healthGoal->goal = $request->goal;
+        $healthGoal->methods = $request->methods;
+        $healthGoal->timeline_years = $request->timeline_years;
+        $healthGoal->user_id = $request->user_id;
+        $healthGoal->save();
 
         return redirect()->route('admin.health_goals.index')->with('t-success', 'Health Goal created successfully.');
     }
+
 
     // Show edit form
     public function edit(HealthGoal $healthGoal)
@@ -44,19 +51,23 @@ class HealthGoalController extends Controller
     }
 
     // Update goal
-    public function update(Request $request, HealthGoal $healthGoal)
-    {
-        $request->validate([
-            'goal' => 'required|string|max:255',
-            'methods' => 'nullable|string',
-            'timeline_years' => 'nullable|numeric',
-        ]);
+public function update(Request $request, HealthGoal $healthGoal)
+{
+    $request->validate([
+        'goal' => 'required|string|max:255',
+        'methods' => 'nullable|string',
+        'timeline_years' => 'nullable|numeric',
+        'user_id' => 'required|exists:users,id',
+    ]);
 
-        $healthGoal->update($request->all());
+    $healthGoal->goal = $request->goal;
+    $healthGoal->methods = $request->methods;
+    $healthGoal->timeline_years = $request->timeline_years;
+    $healthGoal->user_id = $request->user_id;
+    $healthGoal->save();
 
-        return redirect()->route('admin.health_goals.index')->with('t-success', 'Health Goal updated successfully.');
-    }
-
+    return redirect()->route('admin.health_goals.index')->with('t-success', 'Health Goal updated successfully.');
+}
     // Delete goal
     public function destroy(HealthGoal $healthGoal)
     {

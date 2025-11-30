@@ -24,7 +24,7 @@
 <script src="{{ asset('backend/js/apexcharts.js') }}"></script>
 
 <!-- INTERNAL SELECT2 JS -->
-<script src="{{ asset('backend/plugins/select2/select2.full.min.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <!-- CHART-CIRCLE JS-->
 <script src="{{ asset('backend/plugins/circle-progress/circle-progress.min.js') }}"></script>

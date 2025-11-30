@@ -691,7 +691,6 @@
                                                     <ul>
                                                         <li class="select-status">
                                                             <select
-                                                                class="form-control select2-status-search"
                                                                 data-placeholder="Select Status">
                                                                 <option value="IP">In Progress
                                                                 </option>

@@ -29,7 +29,7 @@
                                     <select name="user_id" id="user_id"
                                         class="form-control @error('user_id') is-invalid @enderror">
                                         <option value="">-- Select User --</option>
-                                        @foreach (\App\Models\User::select('id', 'name', 'email')->get() as $user)
+                                        @foreach (\App\Models\User::select('id', 'name', 'email')->withoutRole('admin')->get() as $user)
                                             <option value="{{ $user->id }}" {{ $user->id == old('user_id', $healthGoal->user_id) ? 'selected' : '' }}>
                                                 {{ $user->name }} ({{ $user->email }})
                                             </option>

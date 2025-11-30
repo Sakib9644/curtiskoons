@@ -19,7 +19,7 @@ class SupplementController extends Controller
     // Show create form
     public function create()
     {
-        $users = User::select('id', 'name', 'email')->get();
+        $users = User::select('id', 'name', 'email')->withoutRole('admin')->get();
         return view('backend.layouts.supplements.create', compact('users'));
     }
 

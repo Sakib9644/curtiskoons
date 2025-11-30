@@ -20,7 +20,7 @@ class TwelveWeekPlanController extends Controller
     public function create()
     {
         // Pass users for dropdown
-        $users = User::select('id', 'name', 'email')->get();
+        $users = User::select('id', 'name', 'email')->withoutRole('admin')->get();
         return view('backend.layouts.twelve_week_plans.create', compact('users'));
     }
 

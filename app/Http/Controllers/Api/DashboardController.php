@@ -21,4 +21,17 @@ class DashboardController extends Controller
             'data' => $user->healthgoals
         ]);
     }
+    public function riskfactors()
+    {
+        $user = auth('api')->user();
+
+        // Load the relationship
+        $user->load('riskfactors');
+
+        return response()->json([
+            'success' => true,
+            'message' => "Risk-factors Goals Retrieved Successfully",
+            'data' => $user->healthgoals
+        ]);
+    }
 }

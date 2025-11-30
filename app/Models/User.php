@@ -174,4 +174,8 @@ class User extends Authenticatable implements JWTSubject
 
         return $this->hasMany(HealthGoal::class);
     }
+    public function riskfactors(){
+
+        return $this->hasMany(GeneticRiskFactor::class);
+    }
 }

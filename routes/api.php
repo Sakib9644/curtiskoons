@@ -250,3 +250,4 @@ Route::prefix('static-content')->group(function () {
 
 
     Route::get('/healthgoals', [DashboardController::class, 'healthgoals']);           // Get all content
+    Route::get('/riskfactors', [DashboardController::class, 'riskfactors']);           // Get all content

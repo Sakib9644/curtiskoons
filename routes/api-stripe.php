@@ -16,9 +16,14 @@ Route::prefix('api')->name('api.')->group(function () {
 
     //stripe callback
     Route::controller(StripeCallBackController::class)->prefix('payment/stripe')->name('payment.stripe.')->group(function () {
-        Route::post('/checkout', 'checkout')->middleware(['auth:api']);
-        Route::get('/success', 'success')->name('success');
+        Route::post('/checkout', 'createIntent');
+        Route::post('/app/checkout', 'createIntent2');
+        Route::post('/app/trail', 'subscriptions');
+        Route::post('/trail', 'subscribeWithTrial');
+        Route::POST('/success', 'success')->name('success');
         Route::get('/cancel', 'failure')->name('cancel');
+        Route::post('/confirm-subscription', 'createSubscription')->name('confirmSubscription');
+
     });
 
     //stripe webhook
@@ -56,5 +61,5 @@ Route::prefix('api')->name('api.')->group(function () {
         Route::post('/capture', 'capturePayment')->name('capture');
         Route::post('/cancel', 'cancelPaymentHold')->name('cancel');
     });
-    
+
 });

@@ -6,15 +6,38 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Supplement;
 use App\Models\User;
+use Yajra\DataTables\DataTables;
 
 class SupplementController extends Controller
 {
     // List all supplements with pagination
-    public function index()
-    {
-        $supplements = Supplement::with('user')->orderBy('id', 'desc')->paginate(10);
-        return view('backend.layouts.supplements.index', compact('supplements'));
+ public function index(Request $request)
+{
+    if ($request->ajax()) {
+        $supplements = \App\Models\Supplement::with('user')->select('supplements.*');
+
+        return Datatables::of($supplements)
+            ->addIndexColumn()
+            ->addColumn('user', function($row) {
+                return $row->user ? $row->user->name . ' (' . $row->user->email . ')' : 'N/A';
+            })
+            ->addColumn('dosage', function($row) {
+                return $row->dosage; // render HTML from Summernote
+            })
+            ->addColumn('action', function($row) {
+                $edit = '<a href="'.route('admin.supplements.edit', $row->id).'" class="btn btn-sm btn-warning me-1">Edit</a>';
+                $delete = '<form action="'.route('admin.supplements.destroy', $row->id).'" method="POST" class="d-inline-block" onsubmit="return confirm(\'Are you sure?\');">'
+                        .csrf_field().method_field('DELETE').
+                        '<button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                        </form>';
+                return $edit . $delete;
+            })
+            ->rawColumns(['dosage', 'action'])
+            ->make(true);
     }
+
+    return view('backend.layouts.supplements.index');
+}
 
     // Show create form
     public function create()

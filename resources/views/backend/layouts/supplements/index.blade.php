@@ -1,74 +1,67 @@
 @extends('backend.app', ['title' => 'Supplements'])
 
 @section('content')
-    <div class="app-content main-content mt-0">
-        <div class="side-app">
-            <div class="main-container container-fluid">
+<div class="app-content main-content mt-0">
+    <div class="side-app">
+        <div class="main-container container-fluid">
 
-                {{-- Page Header --}}
-                <div class="page-header d-flex justify-content-between align-items-center">
-                    <h1 class="page-title mb-0">Supplements</h1>
-                    <a href="{{ route('admin.supplements.create') }}" class="btn btn-primary">Add New</a>
-                </div>
-                <div class="row mt-4">
-                    <div class="col-lg-12">
-                        <div class="card border-0">
-                            <div class="card-body p-0">
-                                <div class="table-responsive">
-                                    <table class="table table-bordered table-striped">
-                                        <thead class="">
-                                            <tr>
-                                                <th>#</th>
-                                                <th>Assigned User</th>
-                                                <th>Name</th>
-                                                <th>Dosage / Description</th>
-                                                <th>Action</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @forelse ($supplements as $supplement)
-                                                <tr>
-                                                    <td>{{ $loop->iteration + ($supplements->currentPage() - 1) * $supplements->perPage() }}
-                                                    </td>
-                                                    <td>
-                                                        {{ $supplement->user ? $supplement->user->name . ' (' . $supplement->user->email . ')' : 'N/A' }}
-                                                    </td>
-                                                    <td>{{ $supplement->name }}</td>
-                                                    <td>{!! $supplement->dosage !!}</td>
-                                                    <td>
-                                                        <a href="{{ route('admin.supplements.edit', $supplement->id) }}"
-                                                            class="btn btn-sm btn-warning me-1">Edit</a>
-                                                        <form
-                                                            action="{{ route('admin.supplements.destroy', $supplement->id) }}"
-                                                            method="POST" class="d-inline-block"
-                                                            onsubmit="return confirm('Are you sure?');">
-                                                            @csrf
-                                                            @method('DELETE')
-                                                            <button type="submit"
-                                                                class="btn btn-sm btn-danger">Delete</button>
-                                                        </form>
-                                                    </td>
-                                                </tr>
-                                            @empty
-                                                <tr>
-                                                    <td colspan="5" class="text-center">No supplements found.</td>
-                                                </tr>
-                                            @endforelse
-                                        </tbody>
-                                    </table>
-                                </div>
+            {{-- Page Header --}}
+            <div class="page-header d-flex justify-content-between align-items-center">
+                <h1 class="page-title mb-0">Supplements</h1>
+                <a href="{{ route('admin.supplements.create') }}" class="btn btn-primary">Add New</a>
+            </div>
 
-                                {{-- Pagination --}}
-                                <div class="mt-3 px-3">
-                                    {{ $supplements->links() }}
-                                </div>
+            <div class="row mt-4">
+                <div class="col-lg-12">
+                    <div class="card border">
+                        <div class="card-body ">
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-striped" id="supplements-table">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Assigned User</th>
+                                            <th>Name</th>
+                                            <th>Dosage / Description</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {{-- Data will be loaded by DataTables --}}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
                 </div>
-                {{-- /Table Card --}}
-
             </div>
+            {{-- /Table Card --}}
+
         </div>
     </div>
+</div>
 @endsection
+
+@push('scripts')
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+
+<script>
+$(function() {
+    $('#supplements-table').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: '{{ route("admin.supplements.index") }}',
+        columns: [
+            { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
+            { data: 'user', name: 'user.email' },
+            { data: 'name', name: 'name' },
+            { data: 'dosage', name: 'dosage' }, // Summernote HTML content
+            { data: 'action', name: 'action', orderable: false, searchable: false },
+        ],
+        order: [[1, 'desc']]
+    });
+});
+</script>
+@endpush

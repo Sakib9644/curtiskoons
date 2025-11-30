@@ -6,15 +6,35 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\TwelveWeekPlan;
 use App\Models\User;
+use Yajra\DataTables\DataTables;
 
 class TwelveWeekPlanController extends Controller
 {
     // List all plans with pagination
-    public function index()
-    {
-        $plans = TwelveWeekPlan::with('user')->orderBy('id', 'desc')->paginate(10);
-        return view('backend.layouts.twelve_week_plans.index', compact('plans'));
+    public function index(Request $request)
+{
+    if ($request->ajax()) {
+        $plans = TwelveWeekPlan::with('user')->select('twelve_week_plans.*');
+
+        return DataTables::of($plans)
+            ->addIndexColumn()
+            ->addColumn('user', function($row){
+                return $row->user ? $row->user->name . ' (' . $row->user->email . ')' : 'N/A';
+            })
+            ->addColumn('action', function($row){
+                $edit = '<a href="'.route('admin.twelve_week_plans.edit', $row->id).'" class="btn btn-sm btn-warning me-1">Edit</a>';
+                $delete = '<form action="'.route('admin.twelve_week_plans.destroy', $row->id).'" method="POST" class="d-inline-block" onsubmit="return confirm(\'Are you sure?\');">'
+                        .csrf_field().method_field('DELETE').
+                        '<button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                        </form>';
+                return $edit . $delete;
+            })
+            ->rawColumns(['action', 'description'])
+            ->make(true);
     }
+
+    return view('backend.layouts.twelve_week_plans.index');
+}
 
     // Show create form
     public function create()

@@ -178,4 +178,12 @@ class User extends Authenticatable implements JWTSubject
 
         return $this->hasMany(GeneticRiskFactor::class);
     }
+    public function suppliments(){
+
+        return $this->hasMany(Supplement::class);
+    }
+    public function twelve_week(){
+
+        return $this->hasMany(TwelveWeekPlan::class);
+    }
 }

@@ -1,114 +1,116 @@
-@extends('backend.app', ['title' => 'Users'])
+@extends('backend.app', ['title' => 'User Management'])
 
 @push('styles')
-    <link href="{{ asset('default/datatable.css') }}" rel="stylesheet" />
+    <style>
+        /* Avatar */
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        /* Status Badge */
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .status-active {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-inactive {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+
+        /* Action buttons */
+        .action-btn-group {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+        }
+
+        .action-btn {
+            width: 36px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Table hover */
+        .table-hover tbody tr:hover {
+            background-color: #f8fafc;
+        }
+
+        .page-title-area {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+    </style>
 @endpush
 
 @section('content')
-    <div class="app-content main-content mt-0">
+    <div class="app-content main-content">
         <div class="side-app">
-
-            <div class="main-container container-fluid">
-
-                <!-- PAGE HEADER -->
-                <div class="page-header">
-                    <div>
-                        <h1 class="page-title">Users</h1>
-                    </div>
-                    <div class="ms-auto pageheader-btn">
-                        <ol class="breadcrumb">
-                            <li class="breadcrumb-item">Access</li>
-                            <li class="breadcrumb-item">Users</li>
-                        </ol>
-                    </div>
-                </div>
-
-                <!-- USERS TABLE -->
+            <div class="main-container ">
                 <div class="row">
-                    <div class="col-12 col-sm-12">
-                        <div class="card product-sales-main">
-                            <div class="card-header border-bottom">
-                                <h3 class="card-title mb-0">List</h3>
+                    <div class="col-12">
+                        <div class="card">
+                            <div
+                                class="card-header border-bottom bg-white d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h3 class="card-title fw-semibold mb-0">Users List</h3>
+                                    <p class="text-muted mb-0">All users are loaded via server-side processing</p>
+                                </div>
                                 @can('insert')
-                                    <div class="card-options ms-auto">
-                                        <a href="{{ route('admin.users.create') }}" class="btn btn-primary btn-sm">Add</a>
-                                    </div>
+                                    <a href="{{ route('admin.users.create') }}"
+                                        class="btn btn-primary d-flex align-items-center gap-2">
+                                        <i class="mdi mdi-plus-circle-outline"></i> Add New User
+                                    </a>
                                 @endcan
                             </div>
-                            <div class="card-body">
-                                <table class="table table-bordered text-nowrap border-bottom" id="datatable">
-                                    <thead>
-                                        <tr>
-                                            <th>SN</th>
-                                            <th>Name</th>
-                                            <th>Slug</th>
-                                            <th>Created</th>
-                                            <th class="text-center">Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @php $sn = 1; @endphp
-                                        @forelse ($users as $user)
+
+                            <div class="card-body ">
+                                <div class="table-responsive">
+                                    <table class="table table-hover table-borderless" id="users-table">
+                                        <thead class="bg-light">
                                             <tr>
-                                                <td>{{ $sn++ }}</td>
-                                                <td>{{ $user->name }}</td>
-                                                <td>{{ $user->slug }}</td>
-                                                <td>{{ \Carbon\Carbon::parse($user->created_at)->format('d-m-Y') }}</td>
-                                                <td class="text-center">
-                                                    <div class="btn-group" role="group" aria-label="Actions">
-
-                                                        <!-- View button (everyone can see) -->
-
-
-                                                        <!-- Update buttons -->
-                                                        @can('view')
-                                                            <a href="{{ route('admin.users.show', $user->id) }}"
-                                                                class="btn btn-info">
-                                                                <i class="mdi mdi-eye"></i>
-                                                            </a>
-                                                        @endcan
-                                                        @can('update')
-                                                            <a href="{{ route('admin.users.status', $user->id) }}"
-                                                                class="btn btn-warning">
-                                                                @if ($user->status == 'active')
-                                                                    <i class="fa-solid fa-lock-open"></i>
-                                                                @else
-                                                                    <i class="fa-solid fa-lock"></i>
-                                                                @endif
-                                                            </a>
-
-                                                            <a href="{{ route('admin.users.edit', $user->id) }}"
-                                                                class="btn btn-primary">
-                                                                <i class="mdi mdi-pencil"></i>
-                                                            </a>
-                                                        @endcan
-
-                                                        <!-- Delete button -->
-                                                        @can('delete')
-                                                            <form action="{{ route('admin.users.destroy', $user->id) }}"
-                                                                method="POST" onsubmit="return confirm('Are you sure?')"
-                                                                style="display:inline;">
-                                                                @csrf
-                                                                @method('DELETE')
-                                                                <button type="submit" class="btn btn-danger">
-                                                                    <i class="mdi mdi-delete"></i>
-                                                                </button>
-                                                            </form>
-                                                        @endcan
-                                                    </div>
-                                                </td>
+                                                <th>#</th>
+                                                <th>User</th>
+                                                <th>Email</th>
+                                                <th>Role</th>
+                                                <th>Group</th>
+                                                <th>Status</th>
+                                                <th>Created</th>
+                                                <th class="text-end">Actions</th>
                                             </tr>
-                                        @empty
-                                            <tr>
-                                                <td colspan="100" class="text-center">No Data</td>
-                                            </tr>
-                                        @endforelse
-                                    </tbody>
-                                </table>
-
-                                <!-- Pagination -->
-                                <div class="d-flex justify-content-center mt-4">
-                                    {{ $users->links('vendor.pagination.bootstrap-5') }}
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>
@@ -118,8 +120,125 @@
             </div>
         </div>
     </div>
+
+    <!-- Assign Group Modal -->
+    <div class="modal fade" id="assignGroupModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <form action="{{ route('admin.users.assignGroup') }}" method="POST" class="modal-content">
+                @csrf
+                <input type="hidden" name="user_id" id="assignUserId">
+                <div class="modal-header border-bottom">
+                    <h5 class="modal-title fw-semibold">Assign Group</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        <div class="user-avatar d-inline-flex mb-2"><span id="userInitial">U</span></div>
+                        <h6 id="userName" class="fw-semibold mb-1">User Name</h6>
+                        <p class="text-muted mb-0">Select a group to assign</p>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Select Group</label>
+                        <select name="group_id" class="form-select select2 group_id" required>
+                            <option value="">Choose a group...</option>
+                            @foreach (App\Models\Group::all() as $group)
+                                <option value="{{ $group->id }}">{{ $group->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="alert alert-info mb-0 d-flex align-items-center">
+                        <i class="mdi mdi-information-outline me-2"></i>
+                        <small>Assigning a new group will override existing group permissions.</small>
+                    </div>
+                </div>
+
+                <div class="modal-footer border-top">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="mdi mdi-check-circle-outline me-2"></i> Assign
+                        Group</button>
+                </div>
+            </form>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
-    <!-- Add any custom JS here -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            $('.group_id').select2({
+                width: '100%',
+                placeholder: 'Select a group',
+                dropdownParent: $('#assignGroupModal')
+            });
+
+            // Initialize DataTable
+            $('#users-table').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: "{{ route('admin.users.index') }}",
+                columns: [{
+                        data: 'DT_RowIndex',
+                        name: 'DT_RowIndex',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'user',
+                        name: 'name'
+                    },
+                    {
+                        data: 'email',
+                        name: 'email',
+                        visible: false, // <-- hide the column
+                        searchable: true // still searchable
+                    },
+                    {
+                        data: 'role',
+                        name: 'roles.name'
+                    },
+                    {
+                        data: 'group',
+                        name: 'assignedgroup.name'
+                    },
+                    {
+                        data: 'status',
+                        name: 'status'
+                    },
+                    {
+                        data: 'created_at',
+                        name: 'created_at'
+                    },
+                    {
+                        data: 'action',
+                        name: 'action',
+                        orderable: false,
+                        searchable: false
+                    }
+                ],
+                order: [
+                    [5, 'desc']
+                ],
+                dom: 'lBfrtip', // show search box
+            });
+
+        });
+
+        function assignGroup(userId, userName) {
+            document.getElementById('assignUserId').value = userId;
+            document.getElementById('userName').textContent = userName;
+            document.getElementById('userInitial').textContent = userName.charAt(0).toUpperCase();
+        }
+
+        function confirmDelete(event) {
+            event.preventDefault();
+            if (confirm("Are you sure you want to delete this user?")) {
+                event.target.submit();
+            }
+        }
+    </script>
 @endpush

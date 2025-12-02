@@ -89,6 +89,11 @@ class User extends Authenticatable implements JWTSubject
         return $value;
     }
 
+
+     public function assignedgroup(){
+
+        return $this->belongsTo(Group::class,'group_id');
+     }
     public function getIsOnlineAttribute()
     {
         return $this->last_activity_at > now()->subMinutes(5);

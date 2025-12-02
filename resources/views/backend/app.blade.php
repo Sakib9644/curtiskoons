@@ -49,7 +49,7 @@
     @include('backend.partials._scripts')
 
     @livewireScripts
-
+<script></script>
 </body>
 
 </html>

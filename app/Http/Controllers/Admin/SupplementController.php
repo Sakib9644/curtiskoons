@@ -11,32 +11,47 @@ use Yajra\DataTables\DataTables;
 class SupplementController extends Controller
 {
     // List all supplements with pagination
- public function index(Request $request)
+public function index(Request $request)
 {
     if ($request->ajax()) {
         $supplements = \App\Models\Supplement::with('user')->select('supplements.*');
 
-        return Datatables::of($supplements)
+        return DataTables::of($supplements)
             ->addIndexColumn()
             ->addColumn('user', function($row) {
                 return $row->user ? $row->user->name . ' (' . $row->user->email . ')' : 'N/A';
             })
             ->addColumn('dosage', function($row) {
-                return $row->dosage; // render HTML from Summernote
+                return $row->dosage; // Summernote HTML content
             })
             ->addColumn('action', function($row) {
-                $edit = '<a href="'.route('admin.supplements.edit', $row->id).'" class="btn btn-sm btn-warning me-1">Edit</a>';
-                $delete = '<form action="'.route('admin.supplements.destroy', $row->id).'" method="POST" class="d-inline-block" onsubmit="return confirm(\'Are you sure?\');">'
+                $buttons = '';
+
+                // View button
+              
+                // Edit button
+                if(auth()->user()->can('update')) {
+                    $buttons .= '<a href="'.route('admin.supplements.edit', $row->id).'" class="btn btn-sm btn-warning me-1">Edit</a>';
+                }
+
+                // Delete button
+                if(auth()->user()->can('delete')) {
+                    $buttons .= '<form action="'.route('admin.supplements.destroy', $row->id).'" method="POST" class="d-inline-block" onsubmit="return confirm(\'Are you sure?\');">'
                         .csrf_field().method_field('DELETE').
                         '<button type="submit" class="btn btn-sm btn-danger">Delete</button>
                         </form>';
-                return $edit . $delete;
+                }
+
+                return $buttons;
             })
-            ->rawColumns(['dosage', 'action'])
+            ->rawColumns(['dosage', 'action']) // render Summernote HTML
             ->make(true);
     }
 
-    return view('backend.layouts.supplements.index');
+    // Check insert permission for "Add New" button
+    $canInsert = auth()->user()->can('insert');
+
+    return view('backend.layouts.supplements.index', compact('canInsert'));
 }
 
     // Show create form

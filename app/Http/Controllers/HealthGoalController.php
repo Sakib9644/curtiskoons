@@ -21,20 +21,41 @@ public function index(Request $request)
             ->addColumn('user', function($row){
                 return $row->user ? $row->user->name . ' (' . $row->user->email . ')' : 'N/A';
             })
+            ->addColumn('methods', function($row){
+                return $row->methods; // Summernote HTML content
+            })
             ->addColumn('action', function($row){
-                $btn = '<a href="'.route('admin.health_goals.edit', $row->id).'" class="btn btn-sm btn-warning me-1">Edit</a>';
-                $btn .= '<form action="'.route('admin.health_goals.destroy', $row->id).'" method="POST" class="d-inline-block" onsubmit="return confirm(\'Are you sure?\');">'
+                $buttons = '';
+
+                // View button
+
+
+                // Edit button
+                if(auth()->user()->can('update')) {
+                    $buttons .= '<a href="'.route('admin.health_goals.edit', $row->id).'" class="btn btn-sm btn-warning me-1">Edit</a>';
+                }
+
+                // Delete button
+                if(auth()->user()->can('delete')) {
+                    $buttons .= '<form action="'.route('admin.health_goals.destroy', $row->id).'" method="POST" class="d-inline-block" onsubmit="return confirm(\'Are you sure?\');">'
                         .csrf_field().method_field('DELETE').
                         '<button type="submit" class="btn btn-sm btn-danger">Delete</button>
                         </form>';
-                return $btn;
+                }
+
+                return $buttons;
             })
-            ->rawColumns(['action', 'methods'])
+            ->rawColumns(['action', 'methods']) // render HTML from Summernote
             ->make(true);
     }
 
-    return view('backend.layouts.goals.index');
+    // Check insert permission for "Add New" button
+    $canInsert = auth()->user()->can('insert');
+
+    return view('backend.layouts.goals.index', compact('canInsert'));
 }
+
+
     // Show create form
     public function create()
     {

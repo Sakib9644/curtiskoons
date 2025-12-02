@@ -14,27 +14,46 @@ class GeneticRiskFactorController extends Controller
 public function index(Request $request)
 {
     if ($request->ajax()) {
-        $factors = GeneticRiskFactor::with('user')->select('genetic_risk_factors.*');
+        $factors = GeneticRiskFactor::with('user')->latest();
 
         return DataTables::of($factors)
             ->addIndexColumn()
-            ->addColumn('user', function($row){
-                return $row->user ? $row->user->email . ' (' . $row->user->name . ')' : 'N/A';
+            ->addColumn('user', function($factor) {
+                return $factor->user->email ?? '-';
             })
-            ->addColumn('action', function($row){
-                $btn = '<a href="'.route('admin.genetic_risk_factors.edit', $row->id).'" class="btn btn-sm btn-warning">Edit</a> ';
-                $btn .= '<form action="'.route('admin.genetic_risk_factors.destroy', $row->id).'" method="POST" style="display:inline-block;">
-                            '.csrf_field().method_field('DELETE').'
-                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm(\'Are you sure?\')">Delete</button>
-                         </form>';
-                return $btn;
+             ->addColumn('description', function($row){
+                return $row->description; // Summernote HTML will be rendered
             })
-            ->rawColumns(['action', 'description'])
+            ->addColumn('action', function($factor) {
+                $buttons = '';
+
+                // Show "view" button
+               
+                // Show "update" button
+                if(auth()->user()->can('update')) {
+                    $buttons .= '<a href="'.route('admin.genetic_risk_factors.edit', $factor->id).'" class="btn btn-primary btn-sm">Edit</a> ';
+                }
+
+                // Show "delete" button
+                if(auth()->user()->can('delete')) {
+                    $buttons .= '<form action="'.route('admin.genetic_risk_factors.destroy', $factor->id).'" method="POST" style="display:inline;" onsubmit="return confirm(\'Are you sure?\')">'
+                        .csrf_field().method_field('DELETE').
+                        '<button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                        </form>';
+                }
+
+                return $buttons;
+            })
+            ->rawColumns(['action','description']) // render HTML
             ->make(true);
     }
 
-    return view('backend.layouts.genetic_risk_factors.index');
+    // Check insert permission for "Add New" button
+    $canInsert = auth()->user()->can('insert');
+
+    return view('backend.layouts.genetic_risk_factors.index', compact('canInsert'));
 }
+
 
     // Show create form
     public function create()

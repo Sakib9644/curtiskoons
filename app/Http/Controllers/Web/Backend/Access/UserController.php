@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class UserController extends Controller
@@ -18,9 +19,9 @@ class UserController extends Controller
 
     public function index(Request $request)
     {
-        $user = Auth::guard('web')->user();
-        $users = User::where('id', '!=', $user->id)->with('roles')->orderBy('id', 'desc')->paginate(25);;
-        return view('backend.layouts.access.users.index', compact('users'));
+        $authUser = Auth::guard('web')->user(); // clearer name
+        $users = User::with('roles')->orderBy('id', 'desc')->paginate(25);
+        return view('backend.layouts.access.users.index', compact('users', 'authUser'));
     }
 
     public function create()
@@ -46,8 +47,9 @@ class UserController extends Controller
         $user->name = $request->name;
         $user->email = $request->email;
         $user->password = bcrypt($request->password);
+        $user->slug = Str::slug($user->name . time());
         $user->save();
-        
+
         foreach ($request->roles as $role) {
             DB::table('model_has_roles')->insert([
                 'role_id' => $role,
@@ -100,7 +102,7 @@ class UserController extends Controller
                     'model_type' => 'App\Models\User',
                     'model_id' => $user->id
                 ]);
-            }            
+            }
 
             return redirect()->back()->with('t-success', 'User updated t-successfully');
         } catch (Exception $e) {
@@ -146,11 +148,9 @@ class UserController extends Controller
         /* $qrCode = base64_encode(QrCode::size(90)->generate(route('admin.users.card', $user->slug)));
         $pdf = Pdf::loadView('card.pdf', compact('user', 'logoBase64', 'whitelogoBase64', 'avatarBase64', 'qrCode', 'backLogoBase64'))->setPaper('a4', 'portrait');
         return $pdf->stream();  */
-        
+
         //for web
         $qrCode = QrCode::size(90)->generate(route('admin.users.card', $user->slug));
         return view('card.web', compact('user', 'logoBase64', 'whitelogoBase64', 'avatarBase64', 'qrCode', 'backLogoBase64'));
-
     }
-    
 }

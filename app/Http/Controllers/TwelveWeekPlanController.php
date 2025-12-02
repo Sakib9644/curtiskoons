@@ -11,7 +11,7 @@ use Yajra\DataTables\DataTables;
 class TwelveWeekPlanController extends Controller
 {
     // List all plans with pagination
-    public function index(Request $request)
+public function index(Request $request)
 {
     if ($request->ajax()) {
         $plans = TwelveWeekPlan::with('user')->select('twelve_week_plans.*');
@@ -21,20 +21,41 @@ class TwelveWeekPlanController extends Controller
             ->addColumn('user', function($row){
                 return $row->user ? $row->user->name . ' (' . $row->user->email . ')' : 'N/A';
             })
+            ->addColumn('description', function($row){
+                return $row->description; // Summernote HTML will be rendered
+            })
             ->addColumn('action', function($row){
-                $edit = '<a href="'.route('admin.twelve_week_plans.edit', $row->id).'" class="btn btn-sm btn-warning me-1">Edit</a>';
-                $delete = '<form action="'.route('admin.twelve_week_plans.destroy', $row->id).'" method="POST" class="d-inline-block" onsubmit="return confirm(\'Are you sure?\');">'
+                $buttons = '';
+
+                // View button
+
+
+                // Edit button
+                if(auth()->user()->can('update')) {
+                    $buttons .= '<a href="'.route('admin.twelve_week_plans.edit', $row->id).'" class="btn btn-sm btn-warning me-1">Edit</a>';
+                }
+
+                // Delete button
+                if(auth()->user()->can('delete')) {
+                    $buttons .= '<form action="'.route('admin.twelve_week_plans.destroy', $row->id).'" method="POST" class="d-inline-block" onsubmit="return confirm(\'Are you sure?\');">'
                         .csrf_field().method_field('DELETE').
                         '<button type="submit" class="btn btn-sm btn-danger">Delete</button>
                         </form>';
-                return $edit . $delete;
+                }
+
+                return $buttons;
             })
-            ->rawColumns(['action', 'description'])
+            ->rawColumns(['action', 'description']) // renders HTML from Summernote
             ->make(true);
     }
 
-    return view('backend.layouts.twelve_week_plans.index');
+    // Check insert permission for "Add New" button
+    $canInsert = auth()->user()->can('insert');
+
+    return view('backend.layouts.twelve_week_plans.index', compact('canInsert'));
 }
+
+
 
     // Show create form
     public function create()

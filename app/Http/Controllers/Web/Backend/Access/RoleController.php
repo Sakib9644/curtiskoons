@@ -50,23 +50,37 @@ class RoleController extends Controller
         ]);
     }
 
-    public function update(Request $request, $id)
-    {
-        $request->validate([
-            'name' => 'required',
-            'permissions' => 'required',
-            'guard_name' => 'required|in:web,api'
+public function update(Request $request, $id)
+{
+    // Validate input
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'permissions' => 'required|array', // array of permission names
+        'guard_name' => 'required|in:web,api'
+    ]);
+
+    try {
+        // Find the role
+        $role = Role::findOrFail($id);
+
+        // Update role name and guard
+        $role->update([
+            'name' => $request->name,
+            'guard_name' => $request->guard_name
         ]);
-        try {
-            $role = Role::find($id);
-            $role->update(['name' => $request->name, 'guard_name' => $request->guard_name]);
-            //must pass name not id
-            $role->syncPermissions($request->permissions);
-            return redirect()->route('admin.roles.index')->with('t-success', 'Role updated t-successfully');
-        } catch (Exception $exception) {
-            return redirect()->back()->with('t-error', $exception->getMessage());
+
+      
+        $role->syncPermissions($request->permissions);
+
+        foreach ($role->users as $user) {
+            $user->permissions()->detach();
         }
+
+        return redirect()->route('admin.roles.index')->with('t-success', 'Role updated successfully');
+    } catch (\Exception $exception) {
+        return redirect()->back()->with('t-error', $exception->getMessage());
     }
+}
 
     public function show($id)
     {

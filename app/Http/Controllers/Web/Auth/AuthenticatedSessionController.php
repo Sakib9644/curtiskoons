@@ -23,22 +23,36 @@ class AuthenticatedSessionController extends Controller
     /**
      * Handle an incoming authentication request.
      */
-    public function store(LoginRequest $request): RedirectResponse
-    {
-        if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
+public function store(LoginRequest $request): RedirectResponse
+{
+    try {
+        if (Auth::attempt([
+            'email' => $request->email,
+            'password' => $request->password
+        ])) {
 
             $request->authenticate();
-
             $request->session()->regenerate();
-            session()->put('t-success', 'Password Confirmed Successfully');
-            return app(WebCustomRedirectMiddleware::class)->handle($request, function () {});
 
-        }else{
+            session()->put('t-success', 'Password Confirmed Successfully');
+
+            return app(WebCustomRedirectMiddleware::class)
+                ->handle($request, function () {});
+        } else {
             return back()->withErrors([
                 'email' => 'The provided credentials do not match our records.',
             ]);
         }
+    } catch (\Exception $e) {
+        // Log unexpected errors
+        \Log::error('Login error: '.$e->getMessage());
+
+        return back()->withErrors([
+            'error' => $e->getMessage(),
+        ]);
     }
+}
+
 
     /**
      * Destroy an authenticated session.

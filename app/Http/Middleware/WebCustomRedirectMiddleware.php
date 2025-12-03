@@ -12,7 +12,6 @@ class WebCustomRedirectMiddleware
     {
 
         if (Auth::guard('web')->check() && Auth::guard('web')->user()->status == 'active') {
-            DD('hello');
             if (Auth::guard('web')->user()->hasRole('developer')) {
                 DD('SASASAS');
                 return redirect()->intended(route('developer.dashboard', absolute: false));

@@ -19,6 +19,7 @@ class WebCustomRedirectMiddleware
                 DD('SDF');
             }
         }
+                DD('SASASAS');
 
         return redirect()->intended(route('home', absolute: false));
     }

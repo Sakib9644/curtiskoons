@@ -35,6 +35,7 @@ public function store(LoginRequest $request): RedirectResponse
             $request->session()->regenerate();
 
             session()->put('t-success', 'Password Confirmed Successfully');
+                DD('SDF');
 
             return app(WebCustomRedirectMiddleware::class)
                 ->handle($request, function () {});

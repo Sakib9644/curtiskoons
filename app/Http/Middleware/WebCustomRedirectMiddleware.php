@@ -10,7 +10,7 @@ class WebCustomRedirectMiddleware
 {
     public function handle(Request $request, Closure $next)
     {
-                        DD('SDF');
+                        DD('hello');
 
         if (Auth::guard('web')->check() && Auth::guard('web')->user()->status == 'active') {
             if (Auth::guard('web')->user()->hasRole('developer')) {

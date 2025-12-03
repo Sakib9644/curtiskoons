@@ -81,8 +81,10 @@
 
                     <ul class="slide-menu">
                         <li><a href="{{ route('admin.users.index') }}" class="slide-item">User</a></li>
-                        <li><a href="{{ route('admin.roles.index') }}" class="slide-item">Roll</a></li>
-                        <li><a href="{{ route('admin.permissions.index') }}" class="slide-item">Permission</a></li>
+                        @if (auth()->user()->hasRole('admin'))
+                            <li><a href="{{ route('admin.roles.index') }}" class="slide-item">Roll</a></li>
+                            <li><a href="{{ route('admin.permissions.index') }}" class="slide-item">Permission</a></li>
+                        @endif
                     </ul>
                 </li>
                 <li class="slide">

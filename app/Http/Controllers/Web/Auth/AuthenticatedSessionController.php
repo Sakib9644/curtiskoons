@@ -44,7 +44,6 @@ public function store(LoginRequest $request): RedirectResponse
             ]);
         }
     } catch (\Exception $e) {
-        dd($e->getMessage());
         // Log unexpected errors
 
         return back()->withErrors([

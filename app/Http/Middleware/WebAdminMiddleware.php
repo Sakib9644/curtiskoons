@@ -10,7 +10,7 @@ class WebAdminMiddleware
 {
     public function handle(Request $request, Closure $next)
     {
-        if (Auth::guard('web')->check() && Auth::guard('web')->user()->hasRole('admin') && Auth::guard('web')->user()->status == 'active') {
+        if (Auth::guard('web')->check() && Auth::guard('web')->user()->withoutRole('user') && Auth::guard('web')->user()->status == 'active') {
             return $next($request);
         }
 

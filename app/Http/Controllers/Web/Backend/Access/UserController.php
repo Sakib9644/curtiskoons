@@ -21,7 +21,7 @@ class UserController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $users = User::with(['roles', 'assignedgroup']);
+            $users = User::OrderBy('created_at','desc')->with(['roles', 'assignedgroup']);
 
             return DataTables::of($users)
                 ->addIndexColumn()
@@ -39,7 +39,7 @@ class UserController extends Controller
                 })
 
                 // Hidden column for searching
-           
+
 
 
                 // Role column

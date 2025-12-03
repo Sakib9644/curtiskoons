@@ -45,10 +45,9 @@ public function store(LoginRequest $request): RedirectResponse
         }
     } catch (\Exception $e) {
         // Log unexpected errors
-        \Log::error('Login error: '.$e->getMessage());
 
         return back()->withErrors([
-            'error' => $e->getMessage(),
+            'error' => "t-error " . $e->getMessage()." ",
         ]);
     }
 }

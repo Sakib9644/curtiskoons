@@ -14,7 +14,6 @@ class WebCustomRedirectMiddleware
             if (Auth::guard('web')->user()->hasRole('developer')) {
                 return redirect()->intended(route('developer.dashboard', absolute: false));
             }elseif (Auth::guard('web')->user()->hasRole('admin') || Auth::guard('web')->user()->hasRole('staff')) {
-                dd(auth()->user());
                 return redirect()->intended(route('admin.dashboard', absolute: false));
             }else{
                 Auth::logout();

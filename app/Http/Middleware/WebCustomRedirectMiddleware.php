@@ -10,18 +10,18 @@ class WebCustomRedirectMiddleware
 {
     public function handle(Request $request, Closure $next)
     {
-                        DD('hello');
 
         if (Auth::guard('web')->check() && Auth::guard('web')->user()->status == 'active') {
+            DD('hello');
             if (Auth::guard('web')->user()->hasRole('developer')) {
+                DD('SASASAS');
                 return redirect()->intended(route('developer.dashboard', absolute: false));
             }elseif (Auth::guard('web')->user()->hasRole('admin') || Auth::guard('web')->user()->hasRole('staff')) {
+                DD('SDF');
                 return redirect()->intended(route('admin.dashboard', absolute: false));
             }else{
-                DD('SDF');
             }
         }
-                DD('SASASAS');
 
         return redirect()->intended(route('home', absolute: false));
     }

@@ -10,15 +10,15 @@ class WebCustomRedirectMiddleware
 {
     public function handle(Request $request, Closure $next)
     {
-
         if (Auth::guard('web')->check() && Auth::guard('web')->user()->status == 'active') {
             if (Auth::guard('web')->user()->hasRole('developer')) {
-                DD('SASASAS');
                 return redirect()->intended(route('developer.dashboard', absolute: false));
             }elseif (Auth::guard('web')->user()->hasRole('admin') || Auth::guard('web')->user()->hasRole('staff')) {
-                DD('SDF');
+                dd(auth()->user());
                 return redirect()->intended(route('admin.dashboard', absolute: false));
             }else{
+                Auth::logout();
+                return redirect()->intended(route('login', absolute: false));
             }
         }
 

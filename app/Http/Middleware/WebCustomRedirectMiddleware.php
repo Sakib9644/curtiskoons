@@ -10,6 +10,8 @@ class WebCustomRedirectMiddleware
 {
     public function handle(Request $request, Closure $next)
     {
+                        DD('SDF');
+
         if (Auth::guard('web')->check() && Auth::guard('web')->user()->status == 'active') {
             if (Auth::guard('web')->user()->hasRole('developer')) {
                 return redirect()->intended(route('developer.dashboard', absolute: false));

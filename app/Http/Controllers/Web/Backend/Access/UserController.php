@@ -21,68 +21,69 @@ class UserController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $users = User::OrderBy('created_at','desc')->with(['roles', 'assignedgroup']);
+            $users = User::with(['roles', 'assignedgroup'])->orderBy('created_at', 'desc');
 
             return DataTables::of($users)
                 ->addIndexColumn()
 
-                // User column: HTML for display
                 ->addColumn('user', function ($user) {
                     $initial = strtoupper(substr($user->name, 0, 1));
                     return '<div class="d-flex align-items-center">
-                            <div class="user-avatar me-3">' . $initial . '</div>
-                            <div>
-                                <h6 class="mb-0 fw-semibold">' . $user->name . '</h6>
-                                <small class="text-muted">' . $user->email . '</small>
-                            </div>
-                        </div>';
+                                <div class="user-avatar me-3">' . $initial . '</div>
+                                <div>
+                                    <h6 class="mb-0 fw-semibold">' . $user->name . '</h6>
+                                    <small class="text-muted">' . $user->email . '</small>
+                                </div>
+                            </div>';
                 })
 
-                // Hidden column for searching
-
-
-
-                // Role column
                 ->addColumn('role', function ($user) {
                     return $user->roles->pluck('name')->join(', ') ?: 'No Role';
                 })
 
-                // Group column
                 ->addColumn('group', function ($user) {
                     return $user->assignedgroup
                         ? '<span class="badge bg-primary bg-opacity-10">' . $user->assignedgroup->name . '</span>'
                         : '<span class="text-muted">Not Assigned</span>';
                 })
 
-                // Created_at column
-                ->addColumn('created_at', function ($user) {
-                    return '<div class="d-flex flex-column">
-                            <span class="fw-medium">' . $user?->created_at?->format('Y-M-d') . '</span>
-                        </div>';
+                ->addColumn('status', function ($user) {
+                    return $user->is_active
+                        ? '<span class="status-badge status-active">Active</span>'
+                        : '<span class="status-badge status-inactive">Inactive</span>';
                 })
 
-                // Action buttons
+                ->addColumn('created_at', function ($user) {
+                    return '<div class="d-flex flex-column">
+                                <span class="fw-medium">' . $user->created_at->format('Y-M-d') . '</span>
+                            </div>';
+                })
+
                 ->addColumn('action', function ($user) {
                     $buttons = '<div class="action-btn-group">';
+
                     if (auth()->user()->can('view')) {
                         $buttons .= '<a href="' . route('admin.users.show', $user->id) . '" class="btn btn-sm btn-info me-1">View</a>';
                     }
                     if (auth()->user()->can('update')) {
                         $buttons .= '<a href="' . route('admin.users.edit', $user->id) . '" class="btn btn-sm btn-primary me-1">Edit</a>';
                         $buttons .= '<button class="btn btn-sm btn-secondary me-1" data-bs-toggle="modal" data-bs-target="#assignGroupModal"
-                                onclick="assignGroup(' . $user->id . ', \'' . $user->name . '\')">Assign Group</button>';
+                                        onclick="assignGroup(' . $user->id . ', \'' . $user->name . '\')">Assign Group</button>';
+                        $buttons .= '<button class="btn btn-sm btn-success me-1" data-bs-toggle="modal" data-bs-target="#uploadLabModal"
+                                        onclick="uploadLab(' . $user->id . ', \'' . $user->name . '\')">Upload Lab</button>';
                     }
                     if (auth()->user()->can('delete')) {
                         $buttons .= '<form action="' . route('admin.users.destroy', $user->id) . '" method="POST" class="d-inline ms-1" onsubmit="return confirm(\'Are you sure you want to delete this user?\')">'
-                            . csrf_field() . method_field('DELETE') .
-                            '<button type="submit" class="btn btn-sm btn-danger">Delete</button>
-                        </form>';
+                                    . csrf_field() . method_field('DELETE') .
+                                    '<button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                </form>';
                     }
+
                     $buttons .= '</div>';
                     return $buttons;
                 })
 
-                ->rawColumns(['user', 'group', 'action', 'created_at','email'])
+                ->rawColumns(['user','group','status','action'])
                 ->make(true);
         }
 

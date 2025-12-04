@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\GeneticRiskFactorController;
 use App\Http\Controllers\Admin\HealthGoalController;
 use App\Http\Controllers\Admin\HealthGoalController as AdminHealthGoalController;
+use App\Http\Controllers\LabReportController;
 use App\Http\Controllers\Web\Backend\Access\PermissionController;
 use App\Http\Controllers\Web\Backend\Access\RoleController;
 use App\Http\Controllers\Web\Backend\Access\UserController;
@@ -380,3 +381,15 @@ Route::resource('health_goals', App\Http\Controllers\HealthGoalController::class
 Route::resource('genetic_risk_factors', GeneticRiskFactorController::class);
 Route::resource('supplements', \App\Http\Controllers\Admin\SupplementController::class);
     Route::resource('twelve_week_plans', \App\Http\Controllers\TwelveWeekPlanController::class);
+
+
+Route::controller(LabReportController::class)
+    ->prefix('users/{user}/lab-reports')
+    ->name('lab_reports.')
+    ->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/create', 'create')->name('create');
+        Route::post('/', 'store')->name('store'); // <-- POST matches /users/{user}/lab-reports
+        Route::get('/{labReport}/review', 'review')->name('review');
+        Route::post('/{labReport}/publish', 'publish')->name('publish');
+    });

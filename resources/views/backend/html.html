@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Medical Laboratory Report</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
+        .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
+        .section { margin-bottom: 25px; }
+        .section-title { background: #f5f5f5; padding: 10px; font-weight: bold; border-left: 4px solid #333; margin-bottom: 15px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #333; color: white; padding: 12px; text-align: left; }
+        td { border: 1px solid #ddd; padding: 10px; }
+        .normal { color: green; }
+        .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 0.9em; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>MEDICAL LABORATORY REPORT</h1>
+        <p>Laboratory ID: L-987654 | Accession #: A2024-001235</p>
+    </div>
+
+    <div class="section">
+        <div class="section-title">PATIENT INFORMATION</div>
+        <table>
+            <tr><td><strong>Patient Name:</strong></td><td>DOE, JOHN</td></tr>
+            <tr><td><strong>Patient ID:</strong></td><td>P123456789</td></tr>
+            <tr><td><strong>Date of Birth:</strong></td><td>1980-01-15</td></tr>
+            <tr><td><strong>Gender:</strong></td><td>Male</td></tr>
+            <tr><td><strong>Collection Date:</strong></td><td>2024-03-15 08:30</td></tr>
+            <tr><td><strong>Report Date:</strong></td><td>2024-03-16 14:20</td></tr>
+            <tr><td><strong>Ordering Physician:</strong></td><td>SMITH, JANE M.D.</td></tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <div class="section-title">COMPREHENSIVE METABOLIC PANEL</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Test Name</th>
+                    <th>Result</th>
+                    <th>Reference Range</th>
+                    <th>Units</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>Glucose</td><td>95</td><td>70-99</td><td>mg/dL</td><td class="normal">Normal</td></tr>
+                <tr><td>Calcium</td><td>9.5</td><td>8.6-10.3</td><td>mg/dL</td><td class="normal">Normal</td></tr>
+                <tr><td>Sodium</td><td>140</td><td>135-145</td><td>mmol/L</td><td class="normal">Normal</td></tr>
+                <tr><td>Potassium</td><td>4.0</td><td>3.5-5.1</td><td>mmol/L</td><td class="normal">Normal</td></tr>
+                <tr><td>Chloride</td><td>102</td><td>98-107</td><td>mmol/L</td><td class="normal">Normal</td></tr>
+                <tr><td>Carbon Dioxide</td><td>24</td><td>22-29</td><td>mmol/L</td><td class="normal">Normal</td></tr>
+                <tr><td>Blood Urea Nitrogen (BUN)</td><td>12</td><td>7-20</td><td>mg/dL</td><td class="normal">Normal</td></tr>
+                <tr><td>Creatinine</td><td>0.9</td><td>0.7-1.3</td><td>mg/dL</td><td class="normal">Normal</td></tr>
+                <tr><td>Albumin</td><td>4.2</td><td>3.5-5.0</td><td>g/dL</td><td class="normal">Normal</td></tr>
+                <tr><td>Total Protein</td><td>7.2</td><td>6.0-8.3</td><td>g/dL</td><td class="normal">Normal</td></tr>
+                <tr><td>Alkaline Phosphatase</td><td>75</td><td>44-121</td><td>U/L</td><td class="normal">Normal</td></tr>
+                <tr><td>Alanine Aminotransferase (ALT)</td><td>18</td><td>9-46</td><td>U/L</td><td class="normal">Normal</td></tr>
+                <tr><td>Aspartate Aminotransferase (AST)</td><td>22</td><td>10-40</td><td>U/L</td><td class="normal">Normal</td></tr>
+                <tr><td>Bilirubin, Total</td><td>0.8</td><td>0.2-1.2</td><td>mg/dL</td><td class="normal">Normal</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section">
+        <div class="section-title">LIPID PANEL</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Test Name</th>
+                    <th>Result</th>
+                    <th>Reference Range</th>
+                    <th>Units</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>Cholesterol, Total</td><td>180</td><td>&lt; 200</td><td>mg/dL</td><td class="normal">Desirable</td></tr>
+                <tr><td>Triglycerides</td><td>150</td><td>&lt; 150</td><td>mg/dL</td><td class="normal">Borderline</td></tr>
+                <tr><td>HDL Cholesterol</td><td>55</td><td>&gt; 40</td><td>mg/dL</td><td class="normal">Desirable</td></tr>
+                <tr><td>LDL Cholesterol</td><td>100</td><td>&lt; 100</td><td>mg/dL</td><td class="normal">Desirable</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="footer">
+        <p><strong>Laboratory:</strong> General Diagnostic Laboratory</p>
+        <p><strong>Address:</strong> 123 Medical Center Drive, Anytown, USA 12345</p>
+        <p><strong>Phone:</strong> (555) 123-4567 | <strong>CLIA #:</strong> 12D3456789</p>
+        <p><strong>Comments:</strong> All results are within normal reference ranges. Fasting sample.</p>
+        <p>*** END OF REPORT ***</p>
+    </div>
+</body>
+</html>

@@ -157,7 +157,7 @@
 
                     <div class="mb-3">
                         <label class="form-label fw-medium">Choose File</label>
-                        <input type="file" name="lab_report" class="form-control" required>
+                        <input type="file" name="file" class="form-control" required>
                     </div>
                     <div class="alert alert-info mb-0">Allowed formats: PDF, JPG, PNG</div>
                 </div>

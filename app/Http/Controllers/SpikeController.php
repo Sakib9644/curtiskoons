@@ -257,7 +257,6 @@ public function listProviderRecords(Request $request)
         );
 
         $rawRecords = $records['records'] ?? [];
-        dd( $rawRecords );
 
         // Group records by date
         $recordsByDate = [];

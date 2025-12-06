@@ -2,128 +2,105 @@
 
 namespace App\Http\Controllers;
 
-use App\Helpers\Helper;
-use App\Models\LabReport;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Storage;
+use App\Models\LabReport;
+use Illuminate\Support\Facades\Log;
 
 class LabReportController extends Controller
 {
-    /**
-     * List all lab reports for all users (admin view)
-     */
-    public function index(Request $request)
-    {
-        $users = User::with('labReports')->orderBy('created_at', 'desc')->get();
-        return view('lab_reports.index', compact('users'));
-    }
-
-    /**
-     * Show user lab reports (optional, for individual user)
-     */
-    public function show(User $user)
-    {
-        $labReports = $user->labReports()->latest()->get();
-        return view('lab_reports.show', compact('user', 'labReports'));
-    }
-
-    /**
-     * Upload lab report form (modal handled in frontend)
-     */
-    public function create(User $user)
-    {
-        return view('lab_reports.create', compact('user'));
-    }
-
-    /**
-     * Store uploaded lab report and optionally call Spike OCR
-     */
-   public function store(Request $request, User $user)
+    public function store(Request $request, $userId)
 {
     $request->validate([
-        'lab_report' => 'required|file|mimes:pdf,jpg,png',
+        'file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
     ]);
 
-    $filePath = null;
+    $file = $request->file('file');
+    $fileName = $file->getClientOriginalName();
+    $fileContents = base64_encode(file_get_contents($file->getPathname()));
 
-    if ($request->hasFile('lab_report')) {
-        $file = $request->file('lab_report');
+    $appId = env('SPIKE_APPLICATION_ID');
+    $hmacKey = env('SPIKE_HMAC_KEY');
+    $baseUrl = env('SPIKE_API_BASE_URL', 'https://app-api.spikeapi.com/v3');
 
-        // Optional: delete previous file if you have any
-        if (!empty($user->labReport?->file_path)) {
-            Helper::fileDelete(public_path($user->labReport->file_path));
+    try {
+        // 1️⃣ Generate HMAC signature
+        $signature = hash_hmac('sha256', (string)$userId, $hmacKey);
+
+        // 2️⃣ Authenticate and get access token
+        $authResponse = Http::post("{$baseUrl}/auth/hmac", [
+            'application_id' => (int)$appId,
+            'application_user_id' => (string)$userId,
+            'signature' => $signature,
+        ]);
+
+        if ($authResponse->failed()) {
+            Log::error('Spike auth failed', ['response' => $authResponse->body()]);
+            return back()->with('t-error', 'Authentication failed: ' . $authResponse->body());
         }
 
-        // Upload using Helper::fileUpload
-        $filePath = Helper::fileUpload($file, 'lab_reports', getFileName($file));
-    }
+        $accessToken = $authResponse->json('access_token');
 
-    $labReport = LabReport::create([
-        'patient_id' => $user->id,
-        'file_path' => $filePath,
-        'user_id' => $user->id,
-        'status' => 'pending',
-    ]);
+        if (!$accessToken) {
+            Log::error('Spike auth missing access token', ['response' => $authResponse->body()]);
+            return back()->with('t-error', 'Authentication did not return access token.');
+        }
 
-    // Optional: process OCR
-    $this->processWithSpike($labReport);
+        // 3️⃣ Prepare payload
+        $payload = [
+            'body' => $fileContents,
+            'filename' => $fileName,
+            'wait_on_process' => true,
+        ];
 
-    return redirect()->back()->with('success', 'Lab report uploaded successfully.');
-}
+        // 4️⃣ Upload lab report
+        $uploadResponse = Http::withToken($accessToken)->post("{$baseUrl}/lab_reports", $payload);
 
+        if ($uploadResponse->failed()) {
+            Log::error('Spike upload failed', ['response' => $uploadResponse->body()]);
+            return back()->with('t-error', 'Upload failed: ' . $uploadResponse->body());
+        }
 
-    /**
-     * Process lab report with Spike OCR API
-     */
-    protected function processWithSpike(LabReport $labReport)
-{
-    // Correct file path
-    $filePath = public_path($labReport->file_path); // points to public/lab_reports/filename.pdf
+        $labReportData = $uploadResponse->json('lab_report');
 
-    $url = env('SPIKE_API_BASE_URL') . '/lab-ocr';
+        if (!$labReportData) {
+            Log::warning('Spike upload returned unexpected response', ['response' => $uploadResponse->body()]);
+            return back()->with('t-error', 'Upload succeeded but lab_report data missing.');
+        }
 
-    $response = Http::withHeaders([
-        'X-Application-ID' => env('SPIKE_APPLICATION_ID'),
-        'X-HMAC-Key' => env('SPIKE_HMAC_KEY')
-    ])->attach(
-        'file',
-        file_get_contents($filePath),
-        basename($filePath)
-    )->post($url, [
-        'patient_id' => $labReport->patient_id
-    ]);
-    dd($response->json() );
+        // 5️⃣ Normalize patient DOB
+        $dob = $labReportData['patient_information']['date_of_birth'] ?? null;
+        if ($dob && preg_match('/^\d{4}$/', $dob)) {
+            // Only year provided, append "-01-01"
+            $dob = $dob . '-01-01';
+        }
 
-    if ($response->ok()) {
-        $labReport->update([
-            'extracted_data' => $response->json(),
-            'status' => 'pending', // or 'processed' if you want to mark it
-        ]);
-    }
-}
-
-
-    /**
-     * Admin review page for lab report
-     */
-    public function review(LabReport $labReport)
-    {
-        return view('lab_reports.review', compact('labReport'));
-    }
-
-    /**
-     * Publish lab report after admin approves
-     */
-    public function publish(Request $request, LabReport $labReport)
-    {
-        $labReport->update([
-            'extracted_data' => $request->only(array_keys($labReport->extracted_data ?? [])),
-            'status' => 'approved'
+        // 6️⃣ Store in DB
+        LabReport::create([
+            'user_id' => $userId,
+            'file_path' => $fileName,
+            'record_id' => $labReportData['record_id'] ?? null,
+            'status' => $labReportData['status'] ?? null,
+            'collection_date' => $labReportData['collection_date'] ?? null,
+            'result_date' => $labReportData['result_date'] ?? null,
+            'report_notes' => $labReportData['notes'] ?? null,
+            'patient_id' => $labReportData['patient_information']['patient_id'] ?? null,
+            'patient_name' => $labReportData['patient_information']['patient_name'] ?? null,
+            'patient_dob' => $dob, // normalized
+            'patient_gender' => $labReportData['patient_information']['gender'] ?? null,
+            'lab_name' => $labReportData['lab_information']['name'] ?? null,
+            'lab_address' => $labReportData['lab_information']['address'] ?? null,
+            'lab_phone' => $labReportData['lab_information']['phone_number'] ?? null,
+            'lab_notes' => $labReportData['lab_information']['notes'] ?? null,
+            'sections' => $labReportData['sections'] ?? [], // store as JSON string
         ]);
 
-        return redirect()->route('users.show', $labReport->patient_id)
-            ->with('success', 'Lab report published successfully.');
+        return back()->with('t-success', 'Lab report uploaded and saved successfully!');
+
+    } catch (\Exception $e) {
+        Log::error('Exception uploading lab report', ['message' => $e->getMessage()]);
+        return back()->with('t-error', 'Error uploading lab report: ' . $e->getMessage());
     }
+}
+
 }

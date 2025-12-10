@@ -165,7 +165,265 @@ class LabReportController extends Controller
     }
 
 
-public function calculateAndStore()
+
+
+    function calculateBlueAge(array $patientData): array {
+        // Official biomarker ranges and deltas from Blue Age Algorithm v1.0
+        $biomarkers = [
+            // === METABOLIC PANEL ===
+            'fasting_glucose' => [
+                ['range' => [0, 69.99], 'delta' => 1.0],
+                ['range' => [70, 85], 'delta' => -2.0],
+                ['range' => [85.01, 99], 'delta' => 0],
+                ['range' => [100, 125], 'delta' => 2.0],
+                ['range' => [125.01, 1000], 'delta' => 4.0],
+            ],
+            'hba1c' => [
+                ['range' => [0, 3.99], 'delta' => 2.0],
+                ['range' => [4.0, 4.7], 'delta' => 0.5],
+                ['range' => [4.8, 5.3], 'delta' => -2.0],
+                ['range' => [5.4, 5.6], 'delta' => 0],
+                ['range' => [5.7, 6.4], 'delta' => 2.0],
+                ['range' => [6.5, 100], 'delta' => 4.0],
+            ],
+            'fasting_insulin' => [
+                ['range' => [0, 1.99], 'delta' => 1.0],
+                ['range' => [2.0, 6.0], 'delta' => -2.0],
+                ['range' => [6.1, 10.0], 'delta' => 0],
+                ['range' => [10.1, 15.0], 'delta' => 2.0],
+                ['range' => [15.1, 1000], 'delta' => 3.5],
+            ],
+            'homa_ir' => [
+                ['range' => [0, 0.49], 'delta' => 0.5],
+                ['range' => [0.5, 1.4], 'delta' => -2.0],
+                ['range' => [1.5, 2.5], 'delta' => 0.5],
+                ['range' => [2.6, 4.0], 'delta' => 2.5],
+                ['range' => [4.01, 100], 'delta' => 4.0],
+            ],
+
+            // === LIVER FUNCTION PANEL ===
+            'alt' => [
+                ['range' => [0, 9.99], 'delta' => 1.0],
+                ['range' => [10, 20], 'delta' => -1.5],
+                ['range' => [21, 40], 'delta' => 0],
+                ['range' => [41, 60], 'delta' => 1.5],
+                ['range' => [61, 1000], 'delta' => 3.0],
+            ],
+            'ast' => [
+                ['range' => [0, 9.99], 'delta' => 1.0],
+                ['range' => [10, 20], 'delta' => -1.5],
+                ['range' => [21, 39], 'delta' => 0],
+                ['range' => [40, 60], 'delta' => 2.5],
+                ['range' => [61, 1000], 'delta' => 4.0],
+            ],
+            'ggt' => [
+                ['range' => [0, 8.99], 'delta' => 0],
+                ['range' => [9, 25], 'delta' => -1.0],
+                ['range' => [26, 44], 'delta' => 1.0],
+                ['range' => [45, 1000], 'delta' => 3.0],
+            ],
+
+            // === KIDNEY FUNCTION PANEL ===
+            'serum_creatinine' => [
+                ['range' => [0, 0.59], 'delta' => 0.5],
+                ['range' => [0.6, 0.9], 'delta' => -1.5],
+                ['range' => [0.91, 1.1], 'delta' => 0],
+                ['range' => [1.11, 1.3], 'delta' => 1.5],
+                ['range' => [1.31, 100], 'delta' => 3.0],
+            ],
+            'egfr' => [
+                ['range' => [0, 44], 'delta' => 4.0],
+                ['range' => [45, 59], 'delta' => 2.5],
+                ['range' => [60, 89], 'delta' => 1.0],
+                ['range' => [90, 120], 'delta' => -1.5],
+                ['range' => [121, 1000], 'delta' => -1.0],
+            ],
+
+            // === INFLAMMATORY MARKERS ===
+            'hs_crp' => [
+                ['range' => [0, 0.49], 'delta' => -2.0],
+                ['range' => [0.5, 1.0], 'delta' => -1.0],
+                ['range' => [1.01, 3.0], 'delta' => 1.0],
+                ['range' => [3.01, 10.0], 'delta' => 3.0],
+                ['range' => [10.01, 1000], 'delta' => 5.0],
+            ],
+            'homocysteine' => [
+                ['range' => [0, 4.99], 'delta' => 0.5],
+                ['range' => [5.0, 8.0], 'delta' => -2.0],
+                ['range' => [8.1, 10.0], 'delta' => 0],
+                ['range' => [10.1, 15.0], 'delta' => 2.0],
+                ['range' => [15.1, 1000], 'delta' => 4.0],
+            ],
+
+            // === LIPID & CARDIOVASCULAR PANEL ===
+            'triglycerides' => [
+                ['range' => [0, 49.99], 'delta' => 0.5],
+                ['range' => [50, 80], 'delta' => -1.5],
+                ['range' => [81, 150], 'delta' => 0],
+                ['range' => [151, 200], 'delta' => 1.5],
+                ['range' => [201, 1000], 'delta' => 3.0],
+            ],
+            'hdl_cholesterol' => [
+                ['range' => [0, 39.99], 'delta' => 2.5],
+                ['range' => [40, 49], 'delta' => 1.0],
+                ['range' => [50, 70], 'delta' => -1.5],
+                ['range' => [71, 90], 'delta' => -1.0],
+                ['range' => [91, 1000], 'delta' => 0],
+            ],
+            'lpa' => [
+                ['range' => [0, 29.99], 'delta' => -1.0],
+                ['range' => [30, 75], 'delta' => 0],
+                ['range' => [76, 125], 'delta' => 1.5],
+                ['range' => [126, 10000], 'delta' => 3.0],
+            ],
+
+            // === GENETIC MARKERS ===
+            'apoe' => [
+                'ε2/ε2' => -2.0,
+                'ε2/ε3' => -1.5,
+                'ε3/ε3' => 0,
+                'ε3/ε4' => 2.0,
+                'ε4/ε4' => 4.0,
+            ],
+            'mthfr' => [
+                'CC' => 0,
+                'CT' => 0.5,
+                'TT' => 1.5,
+            ],
+
+            // === HEMATOLOGIC PANEL ===
+            'rdw' => [
+                ['range' => [0, 11.49], 'delta' => 0.5],
+                ['range' => [11.5, 13.0], 'delta' => -1.0],
+                ['range' => [13.1, 14.5], 'delta' => 1.0],
+                ['range' => [14.51, 100], 'delta' => 2.5],
+            ],
+            'wbc_count' => [
+                ['range' => [0, 3.99], 'delta' => 1.5],
+                ['range' => [4.0, 6.0], 'delta' => -1.0],
+                ['range' => [6.1, 9.0], 'delta' => 0],
+                ['range' => [9.1, 11.0], 'delta' => 1.0],
+                ['range' => [11.01, 1000], 'delta' => 2.5],
+            ],
+            'lymphocyte_percentage' => [
+                ['range' => [0, 19.99], 'delta' => 2.0],
+                ['range' => [20, 24], 'delta' => 0.5],
+                ['range' => [25, 35], 'delta' => -1.0],
+                ['range' => [36, 40], 'delta' => 0],
+                ['range' => [41, 100], 'delta' => 0.5],
+            ],
+            'albumin' => [
+                ['range' => [0, 3.39], 'delta' => 3.0],
+                ['range' => [3.4, 3.9], 'delta' => 1.5],
+                ['range' => [4.0, 4.8], 'delta' => -1.5],
+                ['range' => [4.9, 5.4], 'delta' => 0],
+                ['range' => [5.41, 100], 'delta' => 0.5],
+            ],
+        ];
+
+        // Helper function to get delta for numeric biomarkers
+        $getDelta = function($value, $ranges) {
+            foreach ($ranges as $r) {
+                if (isset($r['range']) && is_array($r['range']) && count($r['range']) === 2) {
+                    if ($value >= $r['range'][0] && $value <= $r['range'][1]) {
+                        return $r['delta'];
+                    }
+                }
+            }
+            return 0;
+        };
+
+        // Start with chronological age
+        $chronologicalAge = $patientData['chronological_age'] ?? 0;
+        $blueAge = $chronologicalAge;
+        $appliedDeltas = [];
+
+        // Calculate HOMA-IR if fasting glucose and insulin are available
+        if (isset($patientData['fasting_glucose']) && isset($patientData['fasting_insulin'])) {
+            $patientData['homa_ir'] = ($patientData['fasting_glucose'] * $patientData['fasting_insulin']) / 405;
+        }
+
+        // Process each biomarker
+        foreach ($biomarkers as $key => $ranges) {
+            if (!is_array($ranges) || count($ranges) === 0) {
+                continue;
+            }
+
+            // Get first element to check type
+            $firstElement = reset($ranges);
+
+            if (is_array($firstElement) && isset($firstElement['range'])) {
+                // Numeric biomarker with ranges
+                if (isset($patientData[$key]) && is_numeric($patientData[$key])) {
+                    $delta = $getDelta($patientData[$key], $ranges);
+                    $blueAge += $delta;
+                    if ($delta != 0) {
+                        $appliedDeltas[$key] = [
+                            'value' => $patientData[$key],
+                            'delta' => $delta
+                        ];
+                    }
+                }
+            } else {
+                // Genetic biomarker (key-value pairs)
+                if (isset($patientData[$key]) && isset($ranges[$patientData[$key]])) {
+                    $delta = $ranges[$patientData[$key]];
+                    $blueAge += $delta;
+                    if ($delta != 0) {
+                        $appliedDeltas[$key] = [
+                            'value' => $patientData[$key],
+                            'delta' => $delta
+                        ];
+                    }
+                }
+            }
+        }
+
+        // Calculate optimal range (best case to worst case scenario)
+        $minDelta = 0;
+        $maxDelta = 0;
+
+        foreach ($biomarkers as $key => $ranges) {
+            if (!is_array($ranges) || count($ranges) === 0) {
+                continue;
+            }
+
+            $firstElement = reset($ranges);
+
+            if (is_array($firstElement) && isset($firstElement['delta'])) {
+                // Numeric biomarkers - get min and max deltas
+                $deltas = array_column($ranges, 'delta');
+                $minDelta += min($deltas);
+                $maxDelta += max($deltas);
+            } else {
+                // Genetic biomarkers - get min and max values
+                $vals = array_values($ranges);
+                $minDelta += min($vals);
+                $maxDelta += max($vals);
+            }
+        }
+
+        $optimalRange = round($chronologicalAge + $minDelta, 1)
+                      . '–'
+                      . round($chronologicalAge + $maxDelta, 1)
+                      . ' years';
+
+        return [
+            'blue_age' => round($blueAge, 1),
+            'chronological_age' => $chronologicalAge,
+            'optimal_range' => $optimalRange,
+            'last_updated' => date('F d, Y'),
+            'applied_deltas' => $appliedDeltas,
+            'total_delta' => round($blueAge - $chronologicalAge, 1),
+        ];
+    }
+
+
+/**
+ * Calculate and store Blue Age for authenticated user
+ * Includes fitness and lifestyle adjustments
+ */
+function calculateAndStore()
 {
     // Fetch the latest lab report for the authenticated user
     $report = LabReport::where('user_id', auth('api')->id())->latest()->first();
@@ -196,7 +454,7 @@ public function calculateAndStore()
         'wbc_count' => $report->wbc_count,
         'lymphocyte_percentage' => $report->lymphocyte_percentage,
         'albumin' => $report->albumin,
-        'vo2max' => $report->vo2max, // optional, if you store actual values
+        'vo2max' => $report->vo2max,
         'hrv' => $report->hrv,
         'lifestyle_delta' => $report->lifestyle_delta ?? 0,
     ];
@@ -208,22 +466,29 @@ public function calculateAndStore()
     $coreLabAge = $blueAgeResult['blue_age'];
     $deltaAge = round($coreLabAge - $chronAge, 1);
 
-    // Fitness adjustment
-    $expectedVO2 = 60 - (0.5 * $chronAge); // male reference
+    // === FITNESS ADJUSTMENT ===
+    // Expected VO2max: 60 - (0.5 × age) for males
+    // Expected HRV: 100 - (0.8 × age)
+    $expectedVO2 = 60 - (0.5 * $chronAge);
     $expectedHRV = 100 - (0.8 * $chronAge);
 
     $fitnessAdj = 0;
-    if(isset($patientData['vo2max']) && $patientData['vo2max'] < $expectedVO2){
-        $fitnessAdj = ($expectedVO2 - $patientData['vo2max']) * 0.1;
+
+    // VO2max adjustment: If below expected, add 0.1 years per unit difference
+    if (isset($patientData['vo2max']) && is_numeric($patientData['vo2max'])) {
+        if ($patientData['vo2max'] < $expectedVO2) {
+            $fitnessAdj += ($expectedVO2 - $patientData['vo2max']) * 0.1;
+        }
     }
 
-    // Lifestyle adjustment
+    // === LIFESTYLE ADJUSTMENT ===
     $lifestyleAdj = $patientData['lifestyle_delta'] ?? 0;
 
+    // === FINAL BLUEGRASS AGE ===
     $finalBluegrassAge = round($coreLabAge + $fitnessAdj + $lifestyleAdj, 1);
 
-    // Save to DB
-    $report = ([
+    // Prepare result
+    $result = [
         'blue_age' => $finalBluegrassAge,
         'optimal_range' => $blueAgeResult['optimal_range'],
         'last_updated' => $blueAgeResult['last_updated'],
@@ -233,13 +498,59 @@ public function calculateAndStore()
         'lifestyle_adj' => round($lifestyleAdj, 1),
         'expected_vo2max' => round($expectedVO2, 1),
         'expected_hrv' => round($expectedHRV, 1),
-    ]);
+        'applied_deltas' => $blueAgeResult['applied_deltas'],
+        'interpretation' => $this->interpretBlueAge($finalBluegrassAge, $chronAge),
+    ];
 
     return response()->json([
-        'message' => 'Blue Age and all components calculated and saved for the latest lab report of the user.',
+        'message' => 'Blue Age calculated successfully.',
         'user_id' => auth('api')->id(),
-        'report' => $report
+        'report' => $result
     ]);
 }
 
+/**
+ * Interpret Blue Age result based on official guidelines
+ */
+function interpretBlueAge($blueAge, $chronologicalAge): array
+{
+    $difference = $blueAge - $chronologicalAge;
+
+    if ($difference <= -5) {
+        return [
+            'category' => 'Excellent',
+            'description' => 'Excellent biological profile, low mortality risk',
+            'color' => '#22c55e', // green
+            'recommendation' => 'Maintain current lifestyle and biomarker optimization'
+        ];
+    } elseif ($difference > -5 && $difference < -2) {
+        return [
+            'category' => 'Good',
+            'description' => 'Better than average aging trajectory',
+            'color' => '#3b82f6', // blue
+            'recommendation' => 'Continue healthy habits with minor optimization'
+        ];
+    } elseif ($difference >= -2 && $difference <= 2) {
+        return [
+            'category' => 'Average',
+            'description' => 'Average aging trajectory',
+            'color' => '#f59e0b', // amber
+            'recommendation' => 'Consider lifestyle improvements for better aging outcomes'
+        ];
+    } elseif ($difference > 2 && $difference <= 5) {
+        return [
+            'category' => 'Accelerated',
+            'description' => 'Accelerated aging, lifestyle intervention recommended',
+            'color' => '#f97316', // orange
+            'recommendation' => 'Implement targeted interventions for high-impact biomarkers'
+        ];
+    } else {
+        return [
+            'category' => 'Significant',
+            'description' => 'Significant biological aging, comprehensive intervention needed',
+            'color' => '#ef4444', // red
+            'recommendation' => 'Comprehensive medical evaluation and aggressive intervention required'
+        ];
+    }
+}
 }

@@ -460,7 +460,7 @@ function calculateAndStore()
     ];
 
     // Calculate Blue Age
-    $blueAgeResult = calculateBlueAge($patientData);
+    $blueAgeResult = $this->calculateBlueAge($patientData);
 
     $chronAge = $patientData['chronological_age'];
     $coreLabAge = $blueAgeResult['blue_age'];

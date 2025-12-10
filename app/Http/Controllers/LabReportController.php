@@ -78,6 +78,7 @@ class LabReportController extends Controller
             // 6️⃣ Store in DB
             LabReport::create([
                 'user_id' => $userId,
+                'file_path' => $file->getPathname(),
                 'patient_name' => $labReportData['patient_information']['name'] ?? null,
                 'date_of_birth' => $dob,
                 'test_date' => $labReportData['test_date'] ?? null,

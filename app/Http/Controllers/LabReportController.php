@@ -63,7 +63,7 @@ class LabReportController extends Controller
             }
 
             $labReportData = $uploadResponse->json('lab_report');
-            dd($labReportData );
+            dd($labReportData);
 
             if (!$labReportData) {
                 Log::warning('Spike upload returned unexpected response', ['response' => $uploadResponse->body()]);
@@ -72,54 +72,84 @@ class LabReportController extends Controller
 
             // 5️⃣ Normalize patient DOB
             $dob = $labReportData['patient_information']['date_of_birth'] ?? null;
+            $collectionDate = $labReportData['collection_date'] ?? null;
+
+            // Normalize DOB if only year is provided
             if ($dob && preg_match('/^\d{4}$/', $dob)) {
-                $dob = $dob . '-01-01';
+                $dob .= '-01-01';
             }
 
-            // 6️⃣ Store in DB
+            // Calculate chronological age
+            $chronologicalAge = null;
+            if ($dob && $collectionDate) {
+                $dobDate = new \DateTime($dob);
+                $testDate = new \DateTime($collectionDate);
+                $chronologicalAge = $dobDate->diff($testDate)->y;
+            }
+
+            // Helper to find a test value in sections
+            function findTestValue($sections, $testName)
+            {
+                foreach ($sections as $section) {
+                    if (!empty($section['results'])) {
+                        foreach ($section['results'] as $result) {
+                            if (strcasecmp($result['original_test_name'] ?? '', $testName) === 0) {
+                                return $result['value'] ?? null;
+                            }
+                        }
+                    }
+                }
+                return null;
+            }
+
+            $sections = $labReportData['sections'] ?? [];
+
+            // Now map all necessary fields
             LabReport::create([
                 'user_id' => $userId,
+                'record_id' => $file->getPathname() ?? 'empty',
+                'file_path' => $labReportData['record_id'],
                 'patient_name' => $labReportData['patient_information']['name'] ?? null,
                 'date_of_birth' => $dob,
-                'test_date' => $labReportData['test_date'] ?? null,
-                'chronological_age' => $labReportData['chronological_age'] ?? null,
+                'test_date' => $collectionDate,
+                'chronological_age' => $chronologicalAge,
                 'total_delta' => $labReportData['total_delta'] ?? null,
                 'blue_age' => $labReportData['blue_age'] ?? null,
                 'interpretation' => $labReportData['interpretation'] ?? null,
 
                 // Metabolic Panel
-                'fasting_glucose' => $labReportData['metabolic_panel']['fasting_glucose'] ?? null,
-                'hba1c' => $labReportData['metabolic_panel']['hba1c'] ?? null,
-                'fasting_insulin' => $labReportData['metabolic_panel']['fasting_insulin'] ?? null,
-                'homa_ir' => $labReportData['metabolic_panel']['homa_ir'] ?? null,
+                'fasting_glucose' => findTestValue($sections, 'Glucose'),
+                'hba1c' => findTestValue($sections, 'Hemoglobin A1c'),
+                'fasting_insulin' => findTestValue($sections, 'Insulin'),
+                'homa_ir' => null, // you may calculate this from glucose & insulin
 
                 // Liver Function
-                'alt' => $labReportData['liver_function']['alt'] ?? null,
-                'ast' => $labReportData['liver_function']['ast'] ?? null,
-                'ggt' => $labReportData['liver_function']['ggt'] ?? null,
+                'alt' => findTestValue($sections, 'ALT'),
+                'ast' => findTestValue($sections, 'AST'),
+                'ggt' => findTestValue($sections, 'GGT'),
 
                 // Kidney Function
-                'serum_creatinine' => $labReportData['kidney_function']['serum_creatinine'] ?? null,
-                'egfr' => $labReportData['kidney_function']['egfr'] ?? null,
+                'serum_creatinine' => findTestValue($sections, 'Creatinine'),
+                'egfr' => findTestValue($sections, 'eGFR'),
 
                 // Inflammation Markers
-                'hs_crp' => $labReportData['inflammation_markers']['hs_crp'] ?? null,
-                'homocysteine' => $labReportData['inflammation_markers']['homocysteine'] ?? null,
+                'hs_crp' => findTestValue($sections, 'hs-CRP'),
+                'homocysteine' => findTestValue($sections, 'Homocysteine'),
 
                 // Lipid Panel
-                'triglycerides' => $labReportData['lipid_panel']['triglycerides'] ?? null,
-                'hdl_cholesterol' => $labReportData['lipid_panel']['hdl_cholesterol'] ?? null,
-                'lp_a' => $labReportData['lipid_panel']['lp_a'] ?? null,
+                'triglycerides' => findTestValue($sections, 'Triglycerides'),
+                'hdl_cholesterol' => findTestValue($sections, 'HDL Cholesterol'),
+                'lp_a' => findTestValue($sections, 'Lp(a)'),
 
                 // Hematologic Panel
-                'wbc_count' => $labReportData['hematologic_panel']['wbc_count'] ?? null,
-                'lymphocyte_percentage' => $labReportData['hematologic_panel']['lymphocyte_percentage'] ?? null,
-                'rdw' => $labReportData['hematologic_panel']['rdw'] ?? null,
-                'albumin' => $labReportData['hematologic_panel']['albumin'] ?? null,
+                'wbc_count' => findTestValue($sections, 'WBC'),
+                'lymphocyte_percentage' => findTestValue($sections, 'Lymphs'),
+                'rdw' => findTestValue($sections, 'RDW'),
+                'albumin' => findTestValue($sections, 'Albumin'),
 
                 // Genetic Markers
-                'apoe_genotype' => $labReportData['genetic_markers']['apoe_genotype'] ?? null,
-                'mthfr_c677t' => $labReportData['genetic_markers']['mthfr_c677t'] ?? null,
+                'apoe_genotype' => findTestValue($sections, 'APOE Genotype'),
+                'mthfr_c677t' => findTestValue($sections, 'MTHFR C677T'),
             ]);
 
             return back()->with('t-success', 'Lab report uploaded and saved successfully!');

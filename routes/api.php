@@ -21,6 +21,7 @@ use App\Http\Controllers\Api\Frontend\SettingsController;
 use App\Http\Controllers\Api\Frontend\SocialLinksController;
 use App\Http\Controllers\Api\Frontend\SubscriberController;
 use App\Http\Controllers\Api\StaticContentController;
+use App\Http\Controllers\LabReportController;
 use App\Http\Controllers\SpikeController;
 use App\Models\SpikeMetric;
 use App\Models\User;
@@ -67,8 +68,8 @@ Route::group(['middleware' => 'guest:api'], function ($router) {
     Route::post('/verify-email', [RegisterController::class, 'VerifyEmail']);
     Route::post('/resend-otp', [RegisterController::class, 'ResendOtp']);
     Route::post('/verify-otp', [RegisterController::class, 'VerifyEmail']);
-    //login
-    Route::post('login', [LoginController::class, 'login'])->name('api.login');
+
+    Route::POST('login', [LoginController::class, 'login'])->name('api.login');
     //forgot password
     Route::post('/forget-password', [ResetPasswordController::class, 'forgotPassword']);
     Route::post('/otp-token', [ResetPasswordController::class, 'MakeOtpToken']);
@@ -246,6 +247,7 @@ Route::prefix('static-content')->group(function () {
      // Get content by type
     Route::get('/', [StaticContentController::class, 'getAll']);           // Get all content
 });
+Route::get('bluegrass-age-report', [LabReportController::class, 'calculateAndStore']);           // Get all content
 
 
 

@@ -41,6 +41,7 @@ class LabReportController extends Controller
 
             $accessToken = $authResponse->json('access_token');
 
+
             if (!$accessToken) {
                 Log::error('Spike auth missing access token', ['response' => $authResponse->body()]);
                 return back()->with('t-error', 'Authentication did not return access token.');
@@ -127,8 +128,8 @@ class LabReportController extends Controller
                 'homa_ir' => null, // you may calculate this from glucose & insulin
 
                 // Liver Function
-                'alt' => findTestValue($sections, 'ALT'),
-                'ast' => findTestValue($sections, 'AST'),
+                'alt' => findTestValue($sections, 'ALT (SGPT)'),
+                'ast' => findTestValue($sections, 'AST (SGOT)'),
                 'ggt' => findTestValue($sections, 'GGT'),
 
                 // Kidney Function
@@ -162,4 +163,84 @@ class LabReportController extends Controller
             return back()->with('t-error', 'Error uploading lab report: ' . $e->getMessage());
         }
     }
+
+
+   public function calculateAndStore()
+{
+    $report = LabReport::where('user_id', auth('api')->id())->latest()->first();
+
+    if (!$report) {
+        return response()->json(['error' => 'No lab reports found for this user.'], 404);
+    }
+
+
+        // Prepare patient data
+        $patientData = [
+            'chronological_age' => $report->chronological_age,
+            'fasting_glucose' => $report->fasting_glucose,
+            'hba1c' => $report->hba1c,
+            'fasting_insulin' => $report->fasting_insulin,
+            'alt' => $report->alt,
+            'ast' => $report->ast,
+            'ggt' => $report->ggt,
+            'serum_creatinine' => $report->serum_creatinine,
+            'egfr' => $report->egfr,
+            'hs_crp' => $report->hs_crp,
+            'homocysteine' => $report->homocysteine,
+            'triglycerides' => $report->triglycerides,
+            'hdl_cholesterol' => $report->hdl_cholesterol,
+            'lpa' => $report->lpa,
+            'apoe' => $report->apoe_genotype,
+            'mthfr' => $report->mthfr_c677t,
+            'rdw' => $report->rdw,
+            'wbc_count' => $report->wbc_count,
+            'lymphocyte_percentage' => $report->lymphocyte_percentage,
+            'albumin' => $report->albumin,
+            'vo2max' => $report->vo2max, // optional, if you store actual values
+            'hrv' => $report->hrv,
+            'lifestyle_delta' => $report->lifestyle_delta ?? 0,
+        ];
+
+        // Calculate Blue Age
+        $blueAgeResult = calculateBlueAge($patientData);
+
+        $chronAge = $patientData['chronological_age'];
+        $coreLabAge = $blueAgeResult['blue_age'];
+        $deltaAge = round($coreLabAge - $chronAge, 1);
+
+        // Fitness adjustment
+        $expectedVO2 = 60 - (0.5 * $chronAge); // male reference
+        $expectedHRV = 100 - (0.8 * $chronAge);
+
+        $fitnessAdj = 0;
+        if(isset($patientData['vo2max']) && $patientData['vo2max'] < $expectedVO2){
+            $fitnessAdj = ($expectedVO2 - $patientData['vo2max']) * 0.1;
+        }
+
+        // Lifestyle adjustment
+        $lifestyleAdj = $patientData['lifestyle_delta'] ?? 0;
+
+        $finalBluegrassAge = round($coreLabAge + $fitnessAdj + $lifestyleAdj, 1);
+
+        // Save to DB
+
+
+    $report = ([
+        'blue_age' => $finalBluegrassAge,
+        'optimal_range' => $blueAgeResult['optimal_range'],
+        'last_updated' => $blueAgeResult['last_updated'],
+        'delta_age' => $deltaAge,
+        'core_lab_age' => $coreLabAge,
+        'fitness_adj' => round($fitnessAdj, 1),
+        'lifestyle_adj' => round($lifestyleAdj, 1),
+        'expected_vo2max' => round($expectedVO2, 1),
+        'expected_hrv' => round($expectedHRV, 1),
+    ]);
+    return response()->json([
+        'message' => 'Blue Age and all components calculated and saved for all lab reports of the user.',
+        'user_id' => auth('api')->id(),
+        'report' => $report
+    ]);
+}
+
 }

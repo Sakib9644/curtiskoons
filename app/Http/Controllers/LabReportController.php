@@ -223,7 +223,7 @@ public function calculateAndStore()
     $finalBluegrassAge = round($coreLabAge + $fitnessAdj + $lifestyleAdj, 1);
 
     // Save to DB
-    $report([
+    $report = ([
         'blue_age' => $finalBluegrassAge,
         'optimal_range' => $blueAgeResult['optimal_range'],
         'last_updated' => $blueAgeResult['last_updated'],

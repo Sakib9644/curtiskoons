@@ -358,6 +358,173 @@ public function listProviderRecords(Request $request)
         ], 500);
     }
 }
+function calculateBluegrassAge(array $data)
+{
+    // -------------------------------
+    // 1. Required Inputs
+    // -------------------------------
+    $age  = $data['age'] ?? 0;
+    $sex  = $data['sex'] ?? 'male';
+
+    // Body measurements
+    $height = $data['height'] ?? 0;     // cm
+    $waist  = $data['waist'] ?? 0;      // cm
+
+    // Labs
+    $labs = $data['labs'] ?? [];
+
+    // Fitness data
+    $fitness = $data['fitness'] ?? [];
+
+    // Lifestyle
+    $life = $data['lifestyle'] ?? [];
+
+    // -------------------------------
+    // 2. Lab Weights
+    // -------------------------------
+    $weights = [
+        'albumin' => -1.2,
+        'creatinine' => 0.6,
+        'glucose' => 0.9,
+        'hscrp' => 1,
+        'lymph' => -0.6,
+        'mcv' => 0.4,
+        'rdw' => 1.2,
+        'alkphos' => 0.5,
+        'wbc' => 0.8,
+    ];
+
+    $lab_scale_to_years = 2;
+
+    // -------------------------------
+    // 3. Fitness Weights
+    // -------------------------------
+    $vo2_per_10pct = -0.8;
+    $hrv_per_10pct = -0.3;
+    $rhr_high_penalty = 0.8;
+    $rhr_low_bonus    = -0.8;
+
+    // -------------------------------
+    // 4. Waist:Height Ratio Logic
+    // -------------------------------
+    $whtr = ($height > 0) ? $waist / $height : 0;
+
+    if ($whtr > 0.55) {
+        $whtr_score = 1;
+    } elseif ($whtr >= 0.50) {
+        $whtr_score = 0.5;
+    } else {
+        $whtr_score = -0.5;
+    }
+
+    // -------------------------------
+    // 5. Lifestyle Weights
+    // -------------------------------
+    $sleep_ge7   = -0.5;
+    $sleep_lt6   = 0.5;
+    $activity_met = -0.5;
+    $activity_sedentary = 0.5;
+    $diet_high = -0.5;
+    $diet_low  = 0.5;
+    $alcohol_3_14 = 0.25;
+    $alcohol_gt14 = 1;
+    $nicotine_current = 1.5;
+    $nicotine_former  = 0.5;
+    $sunburns_ge2     = 0.25;
+    $glp1_good = -0.25;
+    $crash_diet = 0.5;
+
+    // -------------------------------
+    // 6. Compute Lab Age
+    // -------------------------------
+    $lab_age_delta = 0;
+
+    foreach ($weights as $key => $w) {
+        if (!isset($labs[$key])) continue;
+        $lab_age_delta += $labs[$key] * $w;
+    }
+
+    $core_lab_age = $age + ($lab_age_delta * $lab_scale_to_years);
+
+    // -------------------------------
+    // 7. Fitness Adjustments
+    // -------------------------------
+    $fitness_adj = 0;
+
+    // VO2max ratio
+    if (isset($fitness['vo2max'], $fitness['expected_vo2'])) {
+        $ratio = $fitness['vo2max'] / $fitness['expected_vo2'];
+        $fitness_adj += (($ratio - 1) * 10) * $vo2_per_10pct;
+    }
+
+    // HRV ratio
+    if (isset($fitness['hrv'], $fitness['expected_hrv'])) {
+        $ratio = $fitness['hrv'] / $fitness['expected_hrv'];
+        $fitness_adj += (($ratio - 1) * 10) * $hrv_per_10pct;
+    }
+
+    // Resting heart rate bonus/penalty
+    if (isset($fitness['rhr'])) {
+        if ($fitness['rhr'] > 75) $fitness_adj += $rhr_high_penalty;
+        if ($fitness['rhr'] < 55) $fitness_adj += $rhr_low_bonus;
+    }
+
+    // Add WHtR contribution
+    $fitness_adj += $whtr_score;
+
+    // -------------------------------
+    // 8. Lifestyle Adjustments
+    // -------------------------------
+    $life_adj = 0;
+
+    // Sleep
+    if (!empty($life['sleep_hours'])) {
+        if ($life['sleep_hours'] >= 7) $life_adj += $sleep_ge7;
+        if ($life['sleep_hours'] < 6)  $life_adj += $sleep_lt6;
+    }
+
+    // Activity levels
+    if (!empty($life['activity_met'])) {
+        $life_adj += $activity_met;
+    } elseif (!empty($life['activity_low'])) {
+        $life_adj += $activity_sedentary;
+    }
+
+    // Diet
+    if (!empty($life['diet_high'])) $life_adj += $diet_high;
+    if (!empty($life['diet_low']))  $life_adj += $diet_low;
+
+    // Alcohol
+    if (!empty($life['alcohol_3_14'])) $life_adj += $alcohol_3_14;
+    if (!empty($life['alcohol_gt14'])) $life_adj += $alcohol_gt14;
+
+    // Nicotine
+    if (!empty($life['nicotine_current'])) $life_adj += $nicotine_current;
+    if (!empty($life['nicotine_former']))  $life_adj += $nicotine_former;
+
+    // Sunburns
+    if (!empty($life['sunburns_ge2'])) $life_adj += $sunburns_ge2;
+
+    // GLP-1 (safe wellness setting)
+    if (!empty($life['glp1_good'])) $life_adj += $glp1_good;
+
+    // Crash dieting (flag only)
+    if (!empty($life['crash_diet'])) $life_adj += $crash_diet;
+
+    // -------------------------------
+    // 9. Final Bluegrass Age
+    // -------------------------------
+    $bluegrass_age = $core_lab_age + $fitness_adj + $life_adj;
+
+    return [
+        'bluegrass_age' => round($bluegrass_age, 1),
+        'core_lab_age'  => round($core_lab_age, 1),
+        'fitness_adj'   => round($fitness_adj, 1),
+        'lifestyle_adj' => round($life_adj, 1),
+        'delta_age'     => round($bluegrass_age - $age, 1),
+        'whtr'          => round($whtr, 2),
+    ];
+}
 
 
 

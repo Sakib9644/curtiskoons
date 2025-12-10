@@ -10,10 +10,9 @@ function getFileName($file): string
     return time().'_'.pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
 }
 
-if (!function_exists('calculateBlueAge')) {
 
-    function calculateBlueAge(array $patientData): array
-    {
+if (!function_exists('calculateBlueAge')) {
+    function calculateBlueAge(array $patientData): array {
         // Full list of biomarkers with their ranges and deltas
         $biomarkers = [
             'fasting_glucose' => [
@@ -146,12 +145,11 @@ if (!function_exists('calculateBlueAge')) {
                 ['range'=>[5.5,100],'delta'=>0.5],
             ],
         ];
-        dd('sd');
 
         // Helper function for numeric biomarkers
         $getDelta = function($value, $ranges) {
             foreach($ranges as $r){
-                if(isset($r['range']) && count($r['range']) === 2){
+                if(isset($r['range']) && is_array($r['range']) && count($r['range']) === 2){
                     if($value >= $r['range'][0] && $value <= $r['range'][1]){
                         return $r['delta'];
                     }
@@ -163,16 +161,23 @@ if (!function_exists('calculateBlueAge')) {
         $blueAge = $patientData['chronological_age'] ?? 0;
 
         foreach($biomarkers as $key => $ranges){
-            if(is_array($ranges) && count($ranges) > 0){
+            // Skip if ranges is not an array or is empty
+            if(!is_array($ranges) || count($ranges) === 0){
+                continue;
+            }
+
+            // Check if it's a numeric biomarker (has 'range' key in first element)
+            $firstElement = reset($ranges);
+
+            if(is_array($firstElement) && isset($firstElement['range'])){
                 // Numeric biomarkers
-                if(is_array($ranges[0]) && isset($ranges[0]['range'])){
-                    if(isset($patientData[$key])){
-                        $blueAge += $getDelta($patientData[$key], $ranges);
-                    }
-                } else { // Genetic biomarkers
-                    if(isset($patientData[$key]) && isset($ranges[$patientData[$key]])){
-                        $blueAge += $ranges[$patientData[$key]];
-                    }
+                if(isset($patientData[$key]) && is_numeric($patientData[$key])){
+                    $blueAge += $getDelta($patientData[$key], $ranges);
+                }
+            } else {
+                // Genetic biomarkers (key-value pairs)
+                if(isset($patientData[$key]) && isset($ranges[$patientData[$key]])){
+                    $blueAge += $ranges[$patientData[$key]];
                 }
             }
         }
@@ -180,26 +185,36 @@ if (!function_exists('calculateBlueAge')) {
         // Calculate optimal range
         $minDelta = 0;
         $maxDelta = 0;
+
         foreach($biomarkers as $key => $ranges){
-            if(is_array($ranges) && count($ranges) > 0){
-                if(is_array($ranges[0]) && isset($ranges[0]['delta'])){
-                    $deltas = array_column($ranges, 'delta');
-                    $minDelta += min($deltas);
-                    $maxDelta += max($deltas);
-                } else {
-                    $vals = array_values($ranges);
-                    $minDelta += min($vals);
-                    $maxDelta += max($vals);
-                }
+            if(!is_array($ranges) || count($ranges) === 0){
+                continue;
+            }
+
+            $firstElement = reset($ranges);
+
+            if(is_array($firstElement) && isset($firstElement['delta'])){
+                // Numeric biomarkers
+                $deltas = array_column($ranges, 'delta');
+                $minDelta += min($deltas);
+                $maxDelta += max($deltas);
+            } else {
+                // Genetic biomarkers
+                $vals = array_values($ranges);
+                $minDelta += min($vals);
+                $maxDelta += max($vals);
             }
         }
 
-        $optimalRange = round(($patientData['chronological_age'] ?? 0) + $minDelta, 1)
-            .'–'.round(($patientData['chronological_age'] ?? 0) + $maxDelta, 1).' years';
+        $chronologicalAge = $patientData['chronological_age'] ?? 0;
+        $optimalRange = round($chronologicalAge + $minDelta, 1)
+                      . '–'
+                      . round($chronologicalAge + $maxDelta, 1)
+                      . ' years';
 
         return [
             'blue_age' => round($blueAge, 1),
-            'chronological_age' => $patientData['chronological_age'] ?? 0,
+            'chronological_age' => $chronologicalAge,
             'optimal_range' => $optimalRange,
             'last_updated' => date('F d, Y'),
         ];

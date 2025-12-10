@@ -41,7 +41,6 @@ class LabReportController extends Controller
 
             $accessToken = $authResponse->json('access_token');
 
-
             if (!$accessToken) {
                 Log::error('Spike auth missing access token', ['response' => $authResponse->body()]);
                 return back()->with('t-error', 'Authentication did not return access token.');
@@ -55,7 +54,7 @@ class LabReportController extends Controller
             ];
 
             // 4️⃣ Upload lab report
-            $uploadResponse = Http::withToken($accessToken)->timeout(600) // 10 minutes
+            $uploadResponse = Http::withToken($accessToken)->timeout(600)
                 ->post("{$baseUrl}/lab_reports", $payload);
 
             if ($uploadResponse->failed()) {
@@ -71,10 +70,6 @@ class LabReportController extends Controller
             }
 
             // 5️⃣ Normalize patient DOB
-            $dob = $labReportData['patient_information']['date_of_birth'] ?? null;
-            if ($dob && preg_match('/^\d{4}$/', $dob)) {
-                $dob = $dob . '-01-01';
-            }
             $dob = $labReportData['patient_information']['date_of_birth'] ?? null;
             $collectionDate = $labReportData['collection_date'] ?? null;
 
@@ -92,8 +87,7 @@ class LabReportController extends Controller
             }
 
             // Helper to find a test value in sections
-            function findTestValue($sections, $testName)
-            {
+            $findTestValue = function($sections, $testName) {
                 foreach ($sections as $section) {
                     if (!empty($section['results'])) {
                         foreach ($section['results'] as $result) {
@@ -104,7 +98,7 @@ class LabReportController extends Controller
                     }
                 }
                 return null;
-            }
+            };
 
             $sections = $labReportData['sections'] ?? [];
 
@@ -122,40 +116,39 @@ class LabReportController extends Controller
                 'interpretation' => $labReportData['interpretation'] ?? null,
 
                 // Metabolic Panel
-                'fasting_glucose' => findTestValue($sections, 'Glucose'),
-                'hba1c' => findTestValue($sections, 'Hemoglobin A1c'),
-                'fasting_insulin' => findTestValue($sections, 'Insulin'),
-                'homa_ir' => null, // you may calculate this from glucose & insulin
+                'fasting_glucose' => $findTestValue($sections, 'Glucose'),
+                'hba1c' => $findTestValue($sections, 'Hemoglobin A1c'),
+                'fasting_insulin' => $findTestValue($sections, 'Insulin'),
+                'homa_ir' => null,
 
                 // Liver Function
-                'alt' => findTestValue($sections, 'ALT (SGPT)'),
-                'ast' => findTestValue($sections, 'AST (SGOT)'),
-                'ggt' => findTestValue($sections, 'GGT'),
+                'alt' => $findTestValue($sections, 'ALT (SGPT)'),
+                'ast' => $findTestValue($sections, 'AST (SGOT)'),
+                'ggt' => $findTestValue($sections, 'GGT'),
 
                 // Kidney Function
-                'serum_creatinine' => findTestValue($sections, 'Creatinine'),
-                'egfr' => findTestValue($sections, 'eGFR'),
+                'serum_creatinine' => $findTestValue($sections, 'Creatinine'),
+                'egfr' => $findTestValue($sections, 'eGFR'),
 
                 // Inflammation Markers
-                'hs_crp' => findTestValue($sections, 'hs-CRP'),
-                'homocysteine' => findTestValue($sections, 'Homocysteine'),
+                'hs_crp' => $findTestValue($sections, 'hs-CRP'),
+                'homocysteine' => $findTestValue($sections, 'Homocysteine'),
 
                 // Lipid Panel
-                'triglycerides' => findTestValue($sections, 'Triglycerides'),
-                'hdl_cholesterol' => findTestValue($sections, 'HDL Cholesterol'),
-                'lp_a' => findTestValue($sections, 'Lp(a)'),
+                'triglycerides' => $findTestValue($sections, 'Triglycerides'),
+                'hdl_cholesterol' => $findTestValue($sections, 'HDL Cholesterol'),
+                'lp_a' => $findTestValue($sections, 'Lp(a)'),
 
                 // Hematologic Panel
-                'wbc_count' => findTestValue($sections, 'WBC'),
-                'lymphocyte_percentage' => findTestValue($sections, 'Lymphs'),
-                'rdw' => findTestValue($sections, 'RDW'),
-                'albumin' => findTestValue($sections, 'Albumin'),
+                'wbc_count' => $findTestValue($sections, 'WBC'),
+                'lymphocyte_percentage' => $findTestValue($sections, 'Lymphs'),
+                'rdw' => $findTestValue($sections, 'RDW'),
+                'albumin' => $findTestValue($sections, 'Albumin'),
 
                 // Genetic Markers
-                'apoe_genotype' => findTestValue($sections, 'APOE Genotype'),
-                'mthfr_c677t' => findTestValue($sections, 'MTHFR C677T'),
+                'apoe_genotype' => $findTestValue($sections, 'APOE Genotype'),
+                'mthfr_c677t' => $findTestValue($sections, 'MTHFR C677T'),
             ]);
-
 
             return back()->with('t-success', 'Lab report uploaded and saved successfully!');
         } catch (\Exception $e) {
@@ -164,11 +157,11 @@ class LabReportController extends Controller
         }
     }
 
-
-
-
-    function calculateBlueAge(array $patientData): array {
-        // Official biomarker ranges and deltas from Blue Age Algorithm v1.0
+    /**
+     * Calculate Blue Age based on the official Bluegrass Precision Wellness algorithm
+     */
+    private function calculateBlueAge(array $patientData): array
+    {
         $biomarkers = [
             // === METABOLIC PANEL ===
             'fasting_glucose' => [
@@ -200,7 +193,6 @@ class LabReportController extends Controller
                 ['range' => [2.6, 4.0], 'delta' => 2.5],
                 ['range' => [4.01, 100], 'delta' => 4.0],
             ],
-
             // === LIVER FUNCTION PANEL ===
             'alt' => [
                 ['range' => [0, 9.99], 'delta' => 1.0],
@@ -222,7 +214,6 @@ class LabReportController extends Controller
                 ['range' => [26, 44], 'delta' => 1.0],
                 ['range' => [45, 1000], 'delta' => 3.0],
             ],
-
             // === KIDNEY FUNCTION PANEL ===
             'serum_creatinine' => [
                 ['range' => [0, 0.59], 'delta' => 0.5],
@@ -238,7 +229,6 @@ class LabReportController extends Controller
                 ['range' => [90, 120], 'delta' => -1.5],
                 ['range' => [121, 1000], 'delta' => -1.0],
             ],
-
             // === INFLAMMATORY MARKERS ===
             'hs_crp' => [
                 ['range' => [0, 0.49], 'delta' => -2.0],
@@ -254,7 +244,6 @@ class LabReportController extends Controller
                 ['range' => [10.1, 15.0], 'delta' => 2.0],
                 ['range' => [15.1, 1000], 'delta' => 4.0],
             ],
-
             // === LIPID & CARDIOVASCULAR PANEL ===
             'triglycerides' => [
                 ['range' => [0, 49.99], 'delta' => 0.5],
@@ -276,7 +265,6 @@ class LabReportController extends Controller
                 ['range' => [76, 125], 'delta' => 1.5],
                 ['range' => [126, 10000], 'delta' => 3.0],
             ],
-
             // === GENETIC MARKERS ===
             'apoe' => [
                 'ε2/ε2' => -2.0,
@@ -290,7 +278,6 @@ class LabReportController extends Controller
                 'CT' => 0.5,
                 'TT' => 1.5,
             ],
-
             // === HEMATOLOGIC PANEL ===
             'rdw' => [
                 ['range' => [0, 11.49], 'delta' => 0.5],
@@ -339,7 +326,8 @@ class LabReportController extends Controller
         $appliedDeltas = [];
 
         // Calculate HOMA-IR if fasting glucose and insulin are available
-        if (isset($patientData['fasting_glucose']) && isset($patientData['fasting_insulin'])) {
+        if (isset($patientData['fasting_glucose']) && isset($patientData['fasting_insulin'])
+            && is_numeric($patientData['fasting_glucose']) && is_numeric($patientData['fasting_insulin'])) {
             $patientData['homa_ir'] = ($patientData['fasting_glucose'] * $patientData['fasting_insulin']) / 405;
         }
 
@@ -379,7 +367,7 @@ class LabReportController extends Controller
             }
         }
 
-        // Calculate optimal range (best case to worst case scenario)
+        // Calculate optimal range
         $minDelta = 0;
         $maxDelta = 0;
 
@@ -391,12 +379,10 @@ class LabReportController extends Controller
             $firstElement = reset($ranges);
 
             if (is_array($firstElement) && isset($firstElement['delta'])) {
-                // Numeric biomarkers - get min and max deltas
                 $deltas = array_column($ranges, 'delta');
                 $minDelta += min($deltas);
                 $maxDelta += max($deltas);
             } else {
-                // Genetic biomarkers - get min and max values
                 $vals = array_values($ranges);
                 $minDelta += min($vals);
                 $maxDelta += max($vals);
@@ -418,139 +404,133 @@ class LabReportController extends Controller
         ];
     }
 
+    /**
+     * Calculate and store Blue Age for authenticated user
+     */
+    public function calculateAndStore()
+    {
+        // Fetch the latest lab report for the authenticated user
+        $report = LabReport::where('user_id', auth('api')->id())->latest()->first();
 
-/**
- * Calculate and store Blue Age for authenticated user
- * Includes fitness and lifestyle adjustments
- */
-function calculateAndStore()
-{
-    // Fetch the latest lab report for the authenticated user
-    $report = LabReport::where('user_id', auth('api')->id())->latest()->first();
+        if (!$report) {
+            return response()->json(['error' => 'No lab reports found for this user.'], 404);
+        }
 
-    if (!$report) {
-        return response()->json(['error' => 'No lab reports found for this user.'], 404);
+        // Prepare patient data
+        $patientData = [
+            'chronological_age' => $report->chronological_age,
+            'fasting_glucose' => $report->fasting_glucose,
+            'hba1c' => $report->hba1c,
+            'fasting_insulin' => $report->fasting_insulin,
+            'alt' => $report->alt,
+            'ast' => $report->ast,
+            'ggt' => $report->ggt,
+            'serum_creatinine' => $report->serum_creatinine,
+            'egfr' => $report->egfr,
+            'hs_crp' => $report->hs_crp,
+            'homocysteine' => $report->homocysteine,
+            'triglycerides' => $report->triglycerides,
+            'hdl_cholesterol' => $report->hdl_cholesterol,
+            'lpa' => $report->lp_a,
+            'apoe' => $report->apoe_genotype,
+            'mthfr' => $report->mthfr_c677t,
+            'rdw' => $report->rdw,
+            'wbc_count' => $report->wbc_count,
+            'lymphocyte_percentage' => $report->lymphocyte_percentage,
+            'albumin' => $report->albumin,
+            'vo2max' => $report->vo2max ?? null,
+            'hrv' => $report->hrv ?? null,
+            'lifestyle_delta' => $report->lifestyle_delta ?? 0,
+        ];
+
+        // Calculate Blue Age
+        $blueAgeResult = $this->calculateBlueAge($patientData);
+
+        $chronAge = $patientData['chronological_age'];
+        $coreLabAge = $blueAgeResult['blue_age'];
+        $deltaAge = round($coreLabAge - $chronAge, 1);
+
+        // === FITNESS ADJUSTMENT ===
+        $expectedVO2 = 60 - (0.5 * $chronAge);
+        $expectedHRV = 100 - (0.8 * $chronAge);
+
+        $fitnessAdj = 0;
+        if (isset($patientData['vo2max']) && is_numeric($patientData['vo2max'])) {
+            if ($patientData['vo2max'] < $expectedVO2) {
+                $fitnessAdj += ($expectedVO2 - $patientData['vo2max']) * 0.1;
+            }
+        }
+
+        // === LIFESTYLE ADJUSTMENT ===
+        $lifestyleAdj = $patientData['lifestyle_delta'] ?? 0;
+
+        // === FINAL BLUEGRASS AGE ===
+        $finalBluegrassAge = round($coreLabAge + $fitnessAdj + $lifestyleAdj, 1);
+
+        // Prepare result
+        $result = [
+            'blue_age' => $finalBluegrassAge,
+            'optimal_range' => $blueAgeResult['optimal_range'],
+            'last_updated' => $blueAgeResult['last_updated'],
+            'delta_age' => $deltaAge,
+            'core_lab_age' => $coreLabAge,
+            'fitness_adj' => round($fitnessAdj, 1),
+            'lifestyle_adj' => round($lifestyleAdj, 1),
+            'expected_vo2max' => round($expectedVO2, 1),
+            'expected_hrv' => round($expectedHRV, 1),
+            'applied_deltas' => $blueAgeResult['applied_deltas'],
+            'interpretation' => $this->interpretBlueAge($finalBluegrassAge, $chronAge),
+        ];
+
+        return response()->json([
+            'message' => 'Blue Age calculated successfully.',
+            'user_id' => auth('api')->id(),
+            'report' => $result
+        ]);
     }
 
-    // Prepare patient data
-    $patientData = [
-        'chronological_age' => $report->chronological_age,
-        'fasting_glucose' => $report->fasting_glucose,
-        'hba1c' => $report->hba1c,
-        'fasting_insulin' => $report->fasting_insulin,
-        'alt' => $report->alt,
-        'ast' => $report->ast,
-        'ggt' => $report->ggt,
-        'serum_creatinine' => $report->serum_creatinine,
-        'egfr' => $report->egfr,
-        'hs_crp' => $report->hs_crp,
-        'homocysteine' => $report->homocysteine,
-        'triglycerides' => $report->triglycerides,
-        'hdl_cholesterol' => $report->hdl_cholesterol,
-        'lpa' => $report->lpa,
-        'apoe' => $report->apoe_genotype,
-        'mthfr' => $report->mthfr_c677t,
-        'rdw' => $report->rdw,
-        'wbc_count' => $report->wbc_count,
-        'lymphocyte_percentage' => $report->lymphocyte_percentage,
-        'albumin' => $report->albumin,
-        'vo2max' => $report->vo2max,
-        'hrv' => $report->hrv,
-        'lifestyle_delta' => $report->lifestyle_delta ?? 0,
-    ];
+    /**
+     * Interpret Blue Age result based on official guidelines
+     */
+    private function interpretBlueAge($blueAge, $chronologicalAge): array
+    {
+        $difference = $blueAge - $chronologicalAge;
 
-    // Calculate Blue Age
-    $blueAgeResult = $this->calculateBlueAge($patientData);
-
-    $chronAge = $patientData['chronological_age'];
-    $coreLabAge = $blueAgeResult['blue_age'];
-    $deltaAge = round($coreLabAge - $chronAge, 1);
-
-    // === FITNESS ADJUSTMENT ===
-    // Expected VO2max: 60 - (0.5 × age) for males
-    // Expected HRV: 100 - (0.8 × age)
-    $expectedVO2 = 60 - (0.5 * $chronAge);
-    $expectedHRV = 100 - (0.8 * $chronAge);
-
-    $fitnessAdj = 0;
-
-    // VO2max adjustment: If below expected, add 0.1 years per unit difference
-    if (isset($patientData['vo2max']) && is_numeric($patientData['vo2max'])) {
-        if ($patientData['vo2max'] < $expectedVO2) {
-            $fitnessAdj += ($expectedVO2 - $patientData['vo2max']) * 0.1;
+        if ($difference <= -5) {
+            return [
+                'category' => 'Excellent',
+                'description' => 'Excellent biological profile, low mortality risk',
+                'color' => '#22c55e',
+                'recommendation' => 'Maintain current lifestyle and biomarker optimization'
+            ];
+        } elseif ($difference > -5 && $difference < -2) {
+            return [
+                'category' => 'Good',
+                'description' => 'Better than average aging trajectory',
+                'color' => '#3b82f6',
+                'recommendation' => 'Continue healthy habits with minor optimization'
+            ];
+        } elseif ($difference >= -2 && $difference <= 2) {
+            return [
+                'category' => 'Average',
+                'description' => 'Average aging trajectory',
+                'color' => '#f59e0b',
+                'recommendation' => 'Consider lifestyle improvements for better aging outcomes'
+            ];
+        } elseif ($difference > 2 && $difference <= 5) {
+            return [
+                'category' => 'Accelerated',
+                'description' => 'Accelerated aging, lifestyle intervention recommended',
+                'color' => '#f97316',
+                'recommendation' => 'Implement targeted interventions for high-impact biomarkers'
+            ];
+        } else {
+            return [
+                'category' => 'Significant',
+                'description' => 'Significant biological aging, comprehensive intervention needed',
+                'color' => '#ef4444',
+                'recommendation' => 'Comprehensive medical evaluation and aggressive intervention required'
+            ];
         }
     }
-
-    // === LIFESTYLE ADJUSTMENT ===
-    $lifestyleAdj = $patientData['lifestyle_delta'] ?? 0;
-
-    // === FINAL BLUEGRASS AGE ===
-    $finalBluegrassAge = round($coreLabAge + $fitnessAdj + $lifestyleAdj, 1);
-
-    // Prepare result
-    $result = [
-        'blue_age' => $finalBluegrassAge,
-        'optimal_range' => $blueAgeResult['optimal_range'],
-        'last_updated' => $blueAgeResult['last_updated'],
-        'delta_age' => $deltaAge,
-        'core_lab_age' => $coreLabAge,
-        'fitness_adj' => round($fitnessAdj, 1),
-        'lifestyle_adj' => round($lifestyleAdj, 1),
-        'expected_vo2max' => round($expectedVO2, 1),
-        'expected_hrv' => round($expectedHRV, 1),
-        'applied_deltas' => $blueAgeResult['applied_deltas'],
-        'interpretation' => $this->interpretBlueAge($finalBluegrassAge, $chronAge),
-    ];
-
-    return response()->json([
-        'message' => 'Blue Age calculated successfully.',
-        'user_id' => auth('api')->id(),
-        'report' => $result
-    ]);
-}
-
-/**
- * Interpret Blue Age result based on official guidelines
- */
-function interpretBlueAge($blueAge, $chronologicalAge): array
-{
-    $difference = $blueAge - $chronologicalAge;
-
-    if ($difference <= -5) {
-        return [
-            'category' => 'Excellent',
-            'description' => 'Excellent biological profile, low mortality risk',
-            'color' => '#22c55e', // green
-            'recommendation' => 'Maintain current lifestyle and biomarker optimization'
-        ];
-    } elseif ($difference > -5 && $difference < -2) {
-        return [
-            'category' => 'Good',
-            'description' => 'Better than average aging trajectory',
-            'color' => '#3b82f6', // blue
-            'recommendation' => 'Continue healthy habits with minor optimization'
-        ];
-    } elseif ($difference >= -2 && $difference <= 2) {
-        return [
-            'category' => 'Average',
-            'description' => 'Average aging trajectory',
-            'color' => '#f59e0b', // amber
-            'recommendation' => 'Consider lifestyle improvements for better aging outcomes'
-        ];
-    } elseif ($difference > 2 && $difference <= 5) {
-        return [
-            'category' => 'Accelerated',
-            'description' => 'Accelerated aging, lifestyle intervention recommended',
-            'color' => '#f97316', // orange
-            'recommendation' => 'Implement targeted interventions for high-impact biomarkers'
-        ];
-    } else {
-        return [
-            'category' => 'Significant',
-            'description' => 'Significant biological aging, comprehensive intervention needed',
-            'color' => '#ef4444', // red
-            'recommendation' => 'Comprehensive medical evaluation and aggressive intervention required'
-        ];
-    }
-}
 }

@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\LabReport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
-use App\Models\LabReport;
 use Illuminate\Support\Facades\Log;
 
 class LabReportController extends Controller

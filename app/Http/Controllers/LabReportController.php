@@ -63,7 +63,6 @@ class LabReportController extends Controller
             }
 
             $labReportData = $uploadResponse->json('lab_report');
-            dd($labReportData );
 
             if (!$labReportData) {
                 Log::warning('Spike upload returned unexpected response', ['response' => $uploadResponse->body()]);

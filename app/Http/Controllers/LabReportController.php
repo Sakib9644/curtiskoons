@@ -56,6 +56,7 @@ class LabReportController extends Controller
             // 4️⃣ Upload lab report
             $uploadResponse = Http::withToken($accessToken)->timeout(600) // 10 minutes
                 ->post("{$baseUrl}/lab_reports", $payload);
+                dd(    $uploadResponse);
 
             if ($uploadResponse->failed()) {
                 Log::error('Spike upload failed', ['response' => $uploadResponse->body()]);
@@ -63,7 +64,6 @@ class LabReportController extends Controller
             }
 
             $labReportData = $uploadResponse->json('lab_report');
-            dd(    $labReportData );
 
             if (!$labReportData) {
                 Log::warning('Spike upload returned unexpected response', ['response' => $uploadResponse->body()]);

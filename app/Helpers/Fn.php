@@ -146,6 +146,7 @@ if (!function_exists('calculateBlueAge')) {
                 ['range'=>[5.5,100],'delta'=>0.5],
             ],
         ];
+        dd('sd');
 
         // Helper function for numeric biomarkers
         $getDelta = function($value, $ranges) {

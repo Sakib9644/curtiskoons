@@ -121,7 +121,7 @@ class PdfStoreJobs implements ShouldQueue
             LabReport::create([
                 'user_id' => $this->userId,
                 'record_id' => $labReportData['record_id'],
-                'file_path' => $this->filePath,
+                'file_path' => 'demo',
                 'patient_name' => $labReportData['patient_information']['name'] ?? null,
                 'date_of_birth' => $dob,
                 'test_date' => $collectionDate,

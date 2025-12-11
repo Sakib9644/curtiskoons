@@ -27,7 +27,11 @@ class PdfStoreJobs implements ShouldQueue
         $this->fileName = $fileName;
         $this->fileContents = $fileContents;
         $this->userId = $userId;
-        Log::info($this->fileName,$this->fileContents ,$this->userId );
+Log::info('File info:', [
+    'file_name' => $this->fileName,
+    'file_contents' => $this->fileContents,
+    'user_id' => $this->userId
+]);
     }
 
     /**

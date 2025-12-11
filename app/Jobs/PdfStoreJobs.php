@@ -117,7 +117,7 @@ class PdfStoreJobs implements ShouldQueue
             }
 
             // Save LabReport
-            LabReport::create([
+           $labreport = LabReport::create([
                 'user_id' => $this->userId,
                 'record_id' => $labReportData['record_id'],
                 'file_path' => 'demo',
@@ -163,6 +163,8 @@ class PdfStoreJobs implements ShouldQueue
                 'apoe_genotype' => $findTestValue($sections, 'APOE Genotype'),
                 'mthfr_c677t' => $findTestValue($sections, 'MTHFR C677T'),
             ]);
+
+            Log::info(   $labreport);
 
         } catch (\Exception $e) {
             Log::error('Exception uploading lab report', ['message' => $e->getMessage()]);

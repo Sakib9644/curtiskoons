@@ -39,6 +39,9 @@ class PdfStoreJobs implements ShouldQueue
         $hmacKey = env('SPIKE_HMAC_KEY');
         $baseUrl = env('SPIKE_API_BASE_URL', 'https://app-api.spikeapi.com/v3');
 
+                    Log::info($this->fileName,$this->fileContents ,$this->userId );
+
+
         try {
             // 1️⃣ Generate HMAC signature
             $signature = hash_hmac('sha256', (string)$this->userId, $hmacKey);

@@ -225,7 +225,7 @@ public function calculateAndStore()
     // Save to DB
     $report = [
         'blue_age' => $finalBluegrassAge,
-        'chronological_age' => $blueAgeResult['chronological_age'],
+        'chronological_age' => (int)$blueAgeResult['chronological_age'],
         'optimal_range' => $blueAgeResult['optimal_range'],
         'last_updated' => $blueAgeResult['last_updated'],
         'delta_age' => $deltaAge,

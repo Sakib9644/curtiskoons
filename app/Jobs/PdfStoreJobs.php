@@ -170,6 +170,7 @@ Log::info('File info:', [
                 'apoe_genotype' => $findTestValue($sections, 'APOE Genotype'),
                 'mthfr_c677t' => $findTestValue($sections, 'MTHFR C677T'),
             ]);
+Log::info('User created successfully', ['user_id' => $this->userId]);
 
 // Log::info('Lab Report created:', $labreport->toArray());
 

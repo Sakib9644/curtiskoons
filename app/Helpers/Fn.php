@@ -18,7 +18,6 @@ if (!function_exists('calculateBlueAge')) {
     {
         // Fetch all biomarkers with ranges + genetics
         $biomarkers = Biomarker::with(['ranges', 'genetics'])
-            ->where('is_active', 1)
             ->get();
 
         $chronologicalAge = $patientData['chronological_age'] ?? 0;

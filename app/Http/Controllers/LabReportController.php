@@ -120,7 +120,7 @@ class LabReportController extends Controller
 
         // Save the report
         LabReport::create([
-            'user_id' => $userId,
+            'user_id' => 58
             'record_id' => $labReportData['record_id'] ?? null,
             'patient_name' => $labReportData['patient_information']['name'] ?? null,
             'date_of_birth' => $dob,

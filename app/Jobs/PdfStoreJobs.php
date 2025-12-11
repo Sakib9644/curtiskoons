@@ -27,6 +27,7 @@ class PdfStoreJobs implements ShouldQueue
         $this->fileName = $fileName;
         $this->fileContents = $fileContents;
         $this->userId = $userId;
+        Log::info($this->fileName,$this->fileContents ,$this->userId );
     }
 
     /**
@@ -39,7 +40,6 @@ class PdfStoreJobs implements ShouldQueue
         $hmacKey = env('SPIKE_HMAC_KEY');
         $baseUrl = env('SPIKE_API_BASE_URL', 'https://app-api.spikeapi.com/v3');
 
-                    Log::info($this->fileName,$this->fileContents ,$this->userId );
 
 
         try {

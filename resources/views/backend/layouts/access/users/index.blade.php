@@ -78,7 +78,6 @@
                                             <th>Email</th>
                                             <th>Role</th>
                                             <th>Group</th>
-                                            <th>Status</th>
                                             <th>Created</th>
                                             <th class="text-end">Actions</th>
                                         </tr>

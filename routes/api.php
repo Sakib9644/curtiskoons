@@ -78,7 +78,7 @@ Route::group(['middleware' => 'guest:api'], function ($router) {
 });
 Route::group(['middleware' => ['auth:api', 'api-otp']], function ($router) {
     Route::get('/refresh-token', [LoginController::class, 'refreshToken']);
-    Route::get('/login', [LoginController::class, 'login']);
+    Route::post('/login', [LoginController::class, 'login']);
     Route::post('/logout', [LogoutController::class, 'logout']);
     Route::get('/me', [UserController::class, 'me']);
     Route::get('/account/switch', [UserController::class, 'accountSwitch']);

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\LabReport;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -222,7 +223,7 @@ public function calculateAndStore()
         'blue_age' => $finalBluegrassAge,
         'chronological_age' => (int)$blueAgeResult['chronological_age'],
         'optimal_range' => $blueAgeResult['optimal_range'],
-        'last_updated' => $report['test_date']->format('Y D M'),
+        'last_updated' => Carbon::parse($report['test_date'])->format('Y D M'),
         'delta_age' => $deltaAge,
         'core_lab_age' => $coreLabAge,
         'fitness_adj' => round($fitnessAdj, 1),

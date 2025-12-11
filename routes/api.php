@@ -64,6 +64,8 @@ Route::get('dynamic/page/show/{slug}', [PageController::class, 'show']);
 */
 Route::group(['middleware' => 'guest:api'], function ($router) {
     //register
+        Route::post('/login', [LoginController::class, 'login']);
+
     Route::post('register', [RegisterController::class, 'register']);
     Route::post('/verify-email', [RegisterController::class, 'VerifyEmail']);
     Route::post('/resend-otp', [RegisterController::class, 'ResendOtp']);
@@ -78,7 +80,6 @@ Route::group(['middleware' => 'guest:api'], function ($router) {
 });
 Route::group(['middleware' => ['auth:api', 'api-otp']], function ($router) {
     Route::get('/refresh-token', [LoginController::class, 'refreshToken']);
-    Route::post('/login', [LoginController::class, 'login']);
     Route::post('/logout', [LogoutController::class, 'logout']);
     Route::get('/me', [UserController::class, 'me']);
     Route::get('/account/switch', [UserController::class, 'accountSwitch']);

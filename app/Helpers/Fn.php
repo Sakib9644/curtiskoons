@@ -4,6 +4,7 @@ use App\Enums\PageEnum;
 use App\Enums\SectionEnum;
 use App\Models\Setting;
 use App\Models\User;
+use App\Models\Biomarker;
 
 function getFileName($file): string
 {
@@ -11,212 +12,94 @@ function getFileName($file): string
 }
 
 
-if (!function_exists('calculateBlueAge')) {
-    function calculateBlueAge(array $patientData): array {
-        // Full list of biomarkers with their ranges and deltas
-        $biomarkers = [
-            'fasting_glucose' => [
-                ['range'=>[0,69],'delta'=>1],
-                ['range'=>[70,85],'delta'=>-2],
-                ['range'=>[86,99],'delta'=>0],
-                ['range'=>[100,125],'delta'=>2],
-                ['range'=>[126,1000],'delta'=>4],
-            ],
-            'hba1c' => [
-                ['range'=>[0,3.9],'delta'=>2],
-                ['range'=>[4,4.7],'delta'=>0.5],
-                ['range'=>[4.8,5.3],'delta'=>-2],
-                ['range'=>[5.4,5.6],'delta'=>0],
-                ['range'=>[5.7,6.4],'delta'=>2],
-                ['range'=>[6.5,100],'delta'=>4],
-            ],
-            'fasting_insulin' => [
-                ['range'=>[0,1.9],'delta'=>1],
-                ['range'=>[2,6],'delta'=>-2],
-                ['range'=>[6.1,10],'delta'=>0],
-                ['range'=>[10.1,15],'delta'=>2],
-                ['range'=>[15.1,100],'delta'=>3.5],
-            ],
-            'alt' => [
-                ['range'=>[0,9],'delta'=>1],
-                ['range'=>[10,20],'delta'=>-1.5],
-                ['range'=>[21,40],'delta'=>0],
-                ['range'=>[41,60],'delta'=>1.5],
-                ['range'=>[61,1000],'delta'=>3],
-            ],
-            'ast' => [
-                ['range'=>[0,9],'delta'=>1],
-                ['range'=>[10,20],'delta'=>-1.5],
-                ['range'=>[21,39],'delta'=>0],
-                ['range'=>[40,60],'delta'=>2.5],
-                ['range'=>[61,1000],'delta'=>4],
-            ],
-            'ggt' => [
-                ['range'=>[0,8],'delta'=>0],
-                ['range'=>[9,25],'delta'=>-1],
-                ['range'=>[26,44],'delta'=>1],
-                ['range'=>[45,1000],'delta'=>3],
-            ],
-            'serum_creatinine' => [
-                ['range'=>[0,0.59],'delta'=>0.5],
-                ['range'=>[0.6,0.9],'delta'=>-1.5],
-                ['range'=>[0.91,1.1],'delta'=>0],
-                ['range'=>[1.11,1.3],'delta'=>1.5],
-                ['range'=>[1.31,100],'delta'=>3],
-            ],
-            'egfr' => [
-                ['range'=>[0,44],'delta'=>4],
-                ['range'=>[45,59],'delta'=>2.5],
-                ['range'=>[60,89],'delta'=>1],
-                ['range'=>[90,120],'delta'=>-1.5],
-                ['range'=>[121,1000],'delta'=>-1],
-            ],
-            'hs_crp' => [
-                ['range'=>[0,0.49],'delta'=>-2],
-                ['range'=>[0.5,1],'delta'=>-1],
-                ['range'=>[1.1,3],'delta'=>1],
-                ['range'=>[3.1,10],'delta'=>3],
-                ['range'=>[10.1,100],'delta'=>5],
-            ],
-            'homocysteine' => [
-                ['range'=>[0,4.9],'delta'=>0.5],
-                ['range'=>[5,8],'delta'=>-2],
-                ['range'=>[8.1,10],'delta'=>0],
-                ['range'=>[10.1,15],'delta'=>2],
-                ['range'=>[15.1,100],'delta'=>4],
-            ],
-            'triglycerides' => [
-                ['range'=>[0,49],'delta'=>0.5],
-                ['range'=>[50,80],'delta'=>-1.5],
-                ['range'=>[81,150],'delta'=>0],
-                ['range'=>[151,200],'delta'=>1.5],
-                ['range'=>[201,1000],'delta'=>3],
-            ],
-            'hdl_cholesterol' => [
-                ['range'=>[0,39],'delta'=>2.5],
-                ['range'=>[40,49],'delta'=>1],
-                ['range'=>[50,70],'delta'=>-1.5],
-                ['range'=>[71,90],'delta'=>-1],
-                ['range'=>[91,1000],'delta'=>0],
-            ],
-            'lpa' => [
-                ['range'=>[0,29],'delta'=>-1],
-                ['range'=>[30,75],'delta'=>0],
-                ['range'=>[76,125],'delta'=>1.5],
-                ['range'=>[126,1000],'delta'=>3],
-            ],
-            'apoe' => [
-                'ε2/ε2'=>-2,
-                'ε2/ε3'=>-1.5,
-                'ε3/ε3'=>0,
-                'ε3/ε4'=>2,
-                'ε4/ε4'=>4,
-            ],
-            'mthfr' => [
-                'CC'=>0,
-                'CT'=>0.5,
-                'TT'=>1.5,
-            ],
-            'rdw' => [
-                ['range'=>[0,11.4],'delta'=>0.5],
-                ['range'=>[11.5,13],'delta'=>-1],
-                ['range'=>[13.1,14.5],'delta'=>1],
-                ['range'=>[14.6,100],'delta'=>2.5],
-            ],
-            'wbc_count' => [
-                ['range'=>[0,3.9],'delta'=>1.5],
-                ['range'=>[4,6],'delta'=>-1],
-                ['range'=>[6.1,9],'delta'=>0],
-                ['range'=>[9.1,11],'delta'=>1],
-                ['range'=>[11.1,100],'delta'=>2.5],
-            ],
-            'lymphocyte_percentage' => [
-                ['range'=>[0,19],'delta'=>2],
-                ['range'=>[20,24],'delta'=>0.5],
-                ['range'=>[25,35],'delta'=>-1],
-                ['range'=>[36,40],'delta'=>0],
-                ['range'=>[41,100],'delta'=>0.5],
-            ],
-            'albumin' => [
-                ['range'=>[0,3.39],'delta'=>3],
-                ['range'=>[3.4,3.9],'delta'=>1.5],
-                ['range'=>[4,4.8],'delta'=>-1.5],
-                ['range'=>[4.9,5.4],'delta'=>0],
-                ['range'=>[5.5,100],'delta'=>0.5],
-            ],
-        ];
 
-        // Helper function for numeric biomarkers
-        $getDelta = function($value, $ranges) {
-            foreach($ranges as $r){
-                if(isset($r['range']) && is_array($r['range']) && count($r['range']) === 2){
-                    if($value >= $r['range'][0] && $value <= $r['range'][1]){
-                        return $r['delta'];
+if (!function_exists('calculateBlueAge')) {
+    function calculateBlueAge(array $patientData): array
+    {
+        // Fetch all biomarkers with ranges + genetics
+        $biomarkers = Biomarker::with(['ranges', 'genetics'])
+            ->get();
+
+        $chronologicalAge = $patientData['chronological_age'] ?? 0;
+        $blueAge = $chronologicalAge;
+        $totalDelta = 0;
+
+        // Store deltas for reporting
+        $biomarkerDeltas = [];
+
+        // Loop over biomarker records
+        foreach ($biomarkers as $bio) {
+            $key = $bio->name; // ✅ Fixed: use 'name' not 'key'
+
+            // Skip if patient does not have value
+            if (!isset($patientData[$key])) {
+                continue;
+            }
+
+            $value = $patientData[$key];
+            $delta = 0;
+
+            // ------------------------------------------------------------
+            // NUMERIC BIOMARKER
+            // ------------------------------------------------------------
+            if ($bio->is_numeric) { // ✅ Fixed: use is_numeric boolean
+
+                foreach ($bio->ranges as $range) {
+                    // ✅ Fixed: use range_start and range_end
+                    if ($value >= $range->range_start && $value <= $range->range_end) {
+                        $delta = $range->delta;
+                        $blueAge += $delta;
+                        break;
                     }
                 }
             }
-            return 0;
-        };
 
-        $blueAge = $patientData['chronological_age'] ?? 0;
+            // ------------------------------------------------------------
+            // GENETIC BIOMARKER (non-numeric)
+            // ------------------------------------------------------------
+            else {
+                // ✅ Fixed: use 'genotype' not 'variant'
+                $variant = $bio->genetics->where('genotype', $value)->first();
 
-        foreach($biomarkers as $key => $ranges){
-            // Skip if ranges is not an array or is empty
-            if(!is_array($ranges) || count($ranges) === 0){
-                continue;
+                if ($variant) {
+                    $delta = $variant->delta;
+                    $blueAge += $delta;
+                }
             }
 
-            // Check if it's a numeric biomarker (has 'range' key in first element)
-            $firstElement = reset($ranges);
+            // Track delta for this biomarker
+            $biomarkerDeltas[$key] = $delta;
+            $totalDelta += $delta;
+        }
 
-            if(is_array($firstElement) && isset($firstElement['range'])){
-                // Numeric biomarkers
-                if(isset($patientData[$key]) && is_numeric($patientData[$key])){
-                    $blueAge += $getDelta($patientData[$key], $ranges);
-                }
+        // ------------------------------------------------------------
+        // CALCULATE OPTIMAL BLUE AGE
+        // (What Blue Age would be if ALL biomarkers were optimal)
+        // ------------------------------------------------------------
+
+        $optimalDelta = 0;
+
+        foreach ($biomarkers as $bio) {
+
+            if ($bio->is_numeric) {
+                // Find the most negative (best) delta
+                $optimalDelta += $bio->ranges->min('delta');
             } else {
-                // Genetic biomarkers (key-value pairs)
-                if(isset($patientData[$key]) && isset($ranges[$patientData[$key]])){
-                    $blueAge += $ranges[$patientData[$key]];
-                }
+                // Find the most negative (best) delta for genetics
+                $optimalDelta += $bio->genetics->min('delta');
             }
         }
 
-        // Calculate optimal range
-        $minDelta = 0;
-        $maxDelta = 0;
-
-        foreach($biomarkers as $key => $ranges){
-            if(!is_array($ranges) || count($ranges) === 0){
-                continue;
-            }
-
-            $firstElement = reset($ranges);
-
-            if(is_array($firstElement) && isset($firstElement['delta'])){
-                // Numeric biomarkers
-                $deltas = array_column($ranges, 'delta');
-                $minDelta += min($deltas);
-                $maxDelta += max($deltas);
-            } else {
-                // Genetic biomarkers
-                $vals = array_values($ranges);
-                $minDelta += min($vals);
-                $maxDelta += max($vals);
-            }
-        }
-
-        $chronologicalAge = $patientData['chronological_age'] ?? 0;
-        $optimalRange = round($chronologicalAge + $minDelta, 1)
-                      . '–'
-                      . round($chronologicalAge + $maxDelta, 1)
-                      . ' years';
+        $optimalBlueAge = $chronologicalAge + $optimalDelta;
 
         return [
-            'blue_age' => round($blueAge, 1),
-            'chronological_age' => $chronologicalAge,
-            'optimal_range' => $optimalRange,
-            'last_updated' => date('F d, Y'),
+            'blue_age'            => round($blueAge, 1),
+            'chronological_age'   => $chronologicalAge,
+            'total_delta'         => round($totalDelta, 1),
+            'optimal_blue_age'    => round($optimalBlueAge, 1),
+            'years_from_optimal'  => round($blueAge - $optimalBlueAge, 1),
+            'biomarker_deltas'    => $biomarkerDeltas,
+            'last_updated'        => now()->format('F d, Y'),
         ];
     }
 }

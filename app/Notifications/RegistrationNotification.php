@@ -11,11 +11,10 @@ use Illuminate\Notifications\Messages\MailMessage;
 
 class RegistrationNotification extends Notification  implements ShouldQueue
 {
-    use Queueable;
 
     public $data;
     public function __construct($data)
-    {       
+    {
         $this->data = $data;
         $user = User::find($data['user_id']);
         $this->data['name'] = $user->name;

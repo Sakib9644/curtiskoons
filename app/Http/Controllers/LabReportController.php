@@ -222,7 +222,7 @@ public function calculateAndStore()
         'blue_age' => $finalBluegrassAge,
         'chronological_age' => (int)$blueAgeResult['chronological_age'],
         'optimal_range' => $blueAgeResult['optimal_range'],
-        'last_updated' => $patientData['test_date'],
+        'last_updated' => $report['test_date'],
         'delta_age' => $deltaAge,
         'core_lab_age' => $coreLabAge,
         'fitness_adj' => round($fitnessAdj, 1),

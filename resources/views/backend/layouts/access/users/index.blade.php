@@ -193,7 +193,6 @@
                     { data: 'email', name: 'email', visible: false, searchable: true },
                     { data: 'role', name: 'roles.name' },
                     { data: 'group', name: 'assignedgroup.name' },
-                    { data: 'status', name: 'status' },
                     { data: 'created_at', name: 'created_at' },
                     { data: 'action', name: 'action', orderable: false, searchable: false }
                 ],

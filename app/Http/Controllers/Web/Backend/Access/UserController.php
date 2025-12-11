@@ -47,16 +47,11 @@ class UserController extends Controller
                         : '<span class="text-muted">Not Assigned</span>';
                 })
 
-                ->addColumn('status', function ($user) {
-                    return $user->is_active
-                        ? '<span class="status-badge status-active">Active</span>'
-                        : '<span class="status-badge status-inactive">Inactive</span>';
-                })
 
                 ->addColumn('created_at', function ($user) {
-                    return '<div class="d-flex flex-column">
-                                <span class="fw-medium">' . $user->created_at->format('Y-M-d') . '</span>
-                            </div>';
+                    return
+                                 $user->created_at->format('Y-M-d');
+
                 })
 
                 ->addColumn('action', function ($user) {
@@ -86,7 +81,7 @@ class UserController extends Controller
                     return $buttons;
                 })
 
-                ->rawColumns(['user', 'group', 'status', 'action'])
+                ->rawColumns(['user', 'group', 'action'])
                 ->make(true);
         }
 

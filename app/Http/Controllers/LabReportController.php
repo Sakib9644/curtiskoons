@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\LabReport;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -236,6 +237,64 @@ public function calculateAndStore()
         'user_id' => auth('api')->id(),
         'report' => $report
     ]);
+}
+public function index()
+{
+    $reports = LabReport::latest()->paginate(20); // paginate for admin view
+    return view('lab-reports.index', compact('reports'));
+}
+
+public function edit($id)
+{
+    $user = User::find($id);
+
+    $report = labreport::where('user_id',$user->id)->latest()->first();
+
+    return view('backend.lab-reports.edit', compact('report'));
+}
+
+public function update(Request $request, LabReport $report)
+{
+    $data = $request->validate([
+        'patient_name' => 'nullable|string|max:255',
+        'date_of_birth' => 'nullable|date',
+        'test_date' => 'nullable|date',
+        'chronological_age' => 'nullable|numeric',
+
+        'fasting_glucose' => 'nullable|numeric',
+        'hba1c' => 'nullable|numeric',
+        'fasting_insulin' => 'nullable|numeric',
+        'homa_ir' => 'nullable|numeric',
+
+        'alt' => 'nullable|numeric',
+        'ast' => 'nullable|numeric',
+        'ggt' => 'nullable|numeric',
+
+        'serum_creatinine' => 'nullable|numeric',
+        'egfr' => 'nullable|numeric',
+
+        'hs_crp' => 'nullable|numeric',
+        'homocysteine' => 'nullable|numeric',
+
+        'triglycerides' => 'nullable|numeric',
+        'hdl_cholesterol' => 'nullable|numeric',
+        'lp_a' => 'nullable|numeric',
+
+        'wbc_count' => 'nullable|numeric',
+        'lymphocyte_percentage' => 'nullable|numeric',
+        'rdw' => 'nullable|numeric',
+        'albumin' => 'nullable|numeric',
+
+        'apoe_genotype' => 'nullable|string|max:10',
+        'mthfr_c677t' => 'nullable|string|max:5',
+    ]);
+
+    $report->update($data);
+
+    // Optional: Recalculate blue age dynamically if needed
+    $report->update(calculateBlueAge($report->toArray()));
+
+    return redirect()->route('lab-reports.index')->with('success', 'Lab report updated successfully.');
 }
 
 }

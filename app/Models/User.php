@@ -191,4 +191,8 @@ class User extends Authenticatable implements JWTSubject
 
         return $this->hasMany(TwelveWeekPlan::class);
     }
+    public function labreport(){
+
+        return $this->hasMany(labreport::class);
+    }
 }

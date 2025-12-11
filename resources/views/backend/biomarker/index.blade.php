@@ -74,13 +74,13 @@
                                                 <a href="{{ route('admin.biomarker.edit', $biomarker->id) }}" class="btn btn-sm btn-primary">
                                                     <i class="fa fa-edit"></i> Edit
                                                 </a>
-                                                <form action="{{ route('admin.biomarker.destroy', $biomarker->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure?')">
+                                                {{-- <form action="{{ route('admin.biomarker.destroy', $biomarker->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure?')">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit" class="btn btn-sm btn-danger">
                                                         <i class="fa fa-trash"></i> Delete
                                                     </button>
-                                                </form>
+                                                </form> --}}
                                             </td>
                                         </tr>
                                         @empty

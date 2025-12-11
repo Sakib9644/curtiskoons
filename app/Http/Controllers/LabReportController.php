@@ -20,11 +20,12 @@ public function store(Request $request, $userId)
     ]);
 
     $file = $request->file('file');
-
+        $fileName = $file->getClientOriginalName();
+        $fileContents = base64_encode(file_get_contents($file->getPathname()));
     // Dispatch the queued job
     PdfStoreJobs::dispatch(
-        $file->getPathname(),
-        $file->getClientOriginalName(),
+       $fileName,
+        $fileContents,
         $userId
     );
 

@@ -15,17 +15,17 @@ class PdfStoreJobs implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected $filePath;
     protected $fileName;
+    protected $fileContents;
     protected $userId;
 
     /**
      * Create a new job instance.
      */
-    public function __construct($filePath, $fileName, $userId)
+    public function __construct($fileName, $fileContents, $userId)
     {
-        $this->filePath = $filePath;
         $this->fileName = $fileName;
+        $this->fileContents = $fileContents;
         $this->userId = $userId;
     }
 
@@ -34,7 +34,6 @@ class PdfStoreJobs implements ShouldQueue
      */
     public function handle(): void
     {
-        $fileContents = base64_encode(file_get_contents($this->filePath));
 
         $appId = env('SPIKE_APPLICATION_ID');
         $hmacKey = env('SPIKE_HMAC_KEY');
@@ -65,7 +64,7 @@ class PdfStoreJobs implements ShouldQueue
 
             // 3️⃣ Prepare payload
             $payload = [
-                'body' => $fileContents,
+                'body' => $this->fileContents,
                 'filename' => $this->fileName,
                 'wait_on_process' => true,
             ];

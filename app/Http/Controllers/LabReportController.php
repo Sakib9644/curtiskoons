@@ -174,9 +174,16 @@ public function calculateAndStore()
         return response()->json(['error' => 'No lab reports found for this user.'], 404);
     }
 
+    // Calculate chronological age from birth date
+    $user = auth('api')->user();
+    $chronologicalAge = calculateChronologicalAge($user->birth_date);
+
+    // OR if you store it in the report:
+    // $chronologicalAge = $report->chronological_age;
+
     // Prepare patient data
     $patientData = [
-        'chronological_age' => $report->chronological_age,
+        'chronological_age' => $chronologicalAge,
         'fasting_glucose' => $report->fasting_glucose,
         'hba1c' => $report->hba1c,
         'fasting_insulin' => $report->fasting_insulin,
@@ -196,20 +203,20 @@ public function calculateAndStore()
         'wbc_count' => $report->wbc_count,
         'lymphocyte_percentage' => $report->lymphocyte_percentage,
         'albumin' => $report->albumin,
-        'vo2max' => $report->vo2max, // optional, if you store actual values
+        'vo2max' => $report->vo2max,
         'hrv' => $report->hrv,
         'lifestyle_delta' => $report->lifestyle_delta ?? 0,
     ];
 
-    // Calculate Blue Age
+    // Calculate Core Lab Age (chronological + biomarker deltas)
     $blueAgeResult = calculateBlueAge($patientData);
 
-    $chronAge = $patientData['chronological_age'];
-    $coreLabAge = $blueAgeResult['blue_age'];
+    $chronAge = $chronologicalAge;
+    $coreLabAge = $blueAgeResult['core_lab_age'];
     $deltaAge = round($coreLabAge - $chronAge, 1);
 
     // Fitness adjustment
-    $expectedVO2 = 60 - (0.5 * $chronAge); // male reference
+    $expectedVO2 = 60 - (0.5 * $chronAge);
     $expectedHRV = 100 - (0.8 * $chronAge);
 
     $fitnessAdj = 0;
@@ -220,25 +227,39 @@ public function calculateAndStore()
     // Lifestyle adjustment
     $lifestyleAdj = $patientData['lifestyle_delta'] ?? 0;
 
+    // FINAL BLUEGRASS AGE = Core Lab Age + Fitness + Lifestyle
     $finalBluegrassAge = round($coreLabAge + $fitnessAdj + $lifestyleAdj, 1);
 
-    // Save to DB
-    $report = [
+    // Update the report in database
+    $report->update([
+        'chronological_age' => $chronAge,
         'blue_age' => $finalBluegrassAge,
-        'optimal_range' => $blueAgeResult['optimal_range'],
-        'last_updated' => $blueAgeResult['last_updated'],
-        'delta_age' => $deltaAge,
         'core_lab_age' => $coreLabAge,
+        'optimal_range' => $blueAgeResult['optimal_range'],
+        'delta_age' => $deltaAge,
         'fitness_adj' => round($fitnessAdj, 1),
         'lifestyle_adj' => round($lifestyleAdj, 1),
         'expected_vo2max' => round($expectedVO2, 1),
         'expected_hrv' => round($expectedHRV, 1),
-    ];
+        'last_updated' => now(),
+    ]);
 
     return response()->json([
-        'message' => 'Blue Age and all components calculated and saved for the latest lab report of the user.',
+        'message' => 'Blue Age calculated and saved successfully.',
         'user_id' => auth('api')->id(),
-        'report' => $report
+        'data' => [
+            'chronological_age' => $chronAge,
+            'core_lab_age' => $coreLabAge,
+            'delta_age' => $deltaAge,
+            'fitness_adj' => round($fitnessAdj, 1),
+            'lifestyle_adj' => round($lifestyleAdj, 1),
+            'final_bluegrass_age' => $finalBluegrassAge,
+            'optimal_range' => $blueAgeResult['optimal_range'],
+            'expected_vo2max' => round($expectedVO2, 1),
+            'expected_hrv' => round($expectedHRV, 1),
+            'last_updated' => $blueAgeResult['last_updated'],
+            'delta_breakdown' => $blueAgeResult['delta_breakdown'],
+        ]
     ]);
 }
 

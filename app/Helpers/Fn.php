@@ -11,6 +11,21 @@ function getFileName($file): string
 }
 
 
+
+
+if (!function_exists('calculateChronologicalAge')) {
+    function calculateChronologicalAge($birthDate): float {
+        $birth = new DateTime($birthDate);
+        $now = new DateTime();
+        $interval = $birth->diff($now);
+
+        // Calculate precise age with decimals (years + months/12 + days/365)
+        $age = $interval->y + ($interval->m / 12) + ($interval->d / 365);
+
+        return round($age, 1);
+    }
+}
+
 if (!function_exists('calculateBlueAge')) {
     function calculateBlueAge(array $patientData): array {
         // Full list of biomarkers with their ranges and deltas
@@ -158,26 +173,32 @@ if (!function_exists('calculateBlueAge')) {
             return 0;
         };
 
-        $blueAge = $patientData['chronological_age'] ?? 0;
+        $chronologicalAge = $patientData['chronological_age'] ?? 0;
+        $coreLabAge = $chronologicalAge; // Start with chronological age
+
+        // Track individual deltas for debugging
+        $deltaBreakdown = [];
 
         foreach($biomarkers as $key => $ranges){
-            // Skip if ranges is not an array or is empty
             if(!is_array($ranges) || count($ranges) === 0){
                 continue;
             }
 
-            // Check if it's a numeric biomarker (has 'range' key in first element)
             $firstElement = reset($ranges);
 
             if(is_array($firstElement) && isset($firstElement['range'])){
                 // Numeric biomarkers
                 if(isset($patientData[$key]) && is_numeric($patientData[$key])){
-                    $blueAge += $getDelta($patientData[$key], $ranges);
+                    $delta = $getDelta($patientData[$key], $ranges);
+                    $coreLabAge += $delta;
+                    $deltaBreakdown[$key] = $delta;
                 }
             } else {
                 // Genetic biomarkers (key-value pairs)
                 if(isset($patientData[$key]) && isset($ranges[$patientData[$key]])){
-                    $blueAge += $ranges[$patientData[$key]];
+                    $delta = $ranges[$patientData[$key]];
+                    $coreLabAge += $delta;
+                    $deltaBreakdown[$key] = $delta;
                 }
             }
         }
@@ -206,21 +227,20 @@ if (!function_exists('calculateBlueAge')) {
             }
         }
 
-        $chronologicalAge = $patientData['chronological_age'] ?? 0;
         $optimalRange = round($chronologicalAge + $minDelta, 1)
                       . '–'
                       . round($chronologicalAge + $maxDelta, 1)
                       . ' years';
 
         return [
-            'blue_age' => round($blueAge, 1),
+            'core_lab_age' => round($coreLabAge, 1), // This is chronological + biomarker deltas
             'chronological_age' => $chronologicalAge,
             'optimal_range' => $optimalRange,
             'last_updated' => date('F d, Y'),
+            'delta_breakdown' => $deltaBreakdown, // For debugging
         ];
     }
 }
-
 function getEmailName($email): string
 {
     $parts = explode('@', $email);

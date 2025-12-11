@@ -72,102 +72,104 @@ class LabReportController extends Controller
             return back()->with('t-error', 'Error uploading lab report: ' . $e->getMessage());
         }
     }
-    public function webhook($uploadResponse){
+    public function webhook(Request $request)
+{
+    try {
+        $labReportData = $request->json('lab_report');
 
-            $labReportData = $uploadResponse->json('lab_report');
+        if (!$labReportData) {
+            Log::warning('Spike webhook missing lab_report payload', ['payload' => $request->all()]);
+            return response()->json(['error' => 'Invalid payload'], 400);
+        }
 
-            if (!$labReportData) {
-                Log::warning('Spike upload returned unexpected response', ['response' => $uploadResponse->body()]);
-                return back()->with('t-error', 'Upload succeeded but lab_report data missing.');
-            }
+        $userId = $labReportData['application_user_id'] ?? null;
+        if (!$userId) {
+            Log::warning('Spike webhook missing application_user_id');
+            return response()->json(['error' => 'Missing user id'], 400);
+        }
 
-            // 5️⃣ Normalize patient DOB
-            $dob = $labReportData['patient_information']['date_of_birth'] ?? null;
-            if ($dob && preg_match('/^\d{4}$/', $dob)) {
-                $dob = $dob . '-01-01';
-            }
-            $dob = $labReportData['patient_information']['date_of_birth'] ?? null;
-            $collectionDate = $labReportData['collection_date'] ?? null;
+        // Normalize DOB
+        $dob = $labReportData['patient_information']['date_of_birth'] ?? null;
+        if ($dob && preg_match('/^\d{4}$/', $dob)) {
+            $dob .= '-01-01';
+        }
 
-            // Normalize DOB if only year is provided
-            if ($dob && preg_match('/^\d{4}$/', $dob)) {
-                $dob .= '-01-01';
-            }
+        $collectionDate = $labReportData['collection_date'] ?? null;
 
-            // Calculate chronological age
-            $chronologicalAge = null;
-            if ($dob && $collectionDate) {
-                $dobDate = new \DateTime($dob);
-                $testDate = new \DateTime($collectionDate);
-                $chronologicalAge = $dobDate->diff($testDate)->y;
-            }
+        // Calculate chronological age
+        $chronologicalAge = null;
+        if ($dob && $collectionDate) {
+            $chronologicalAge = (new \DateTime($dob))->diff(new \DateTime($collectionDate))->y;
+        }
 
-            // Helper to find a test value in sections
-            function findTestValue($sections, $testName)
-            {
-                foreach ($sections as $section) {
-                    if (!empty($section['results'])) {
-                        foreach ($section['results'] as $result) {
-                            if (strcasecmp($result['original_test_name'] ?? '', $testName) === 0) {
-                                return $result['value'] ?? null;
-                            }
+        // Helper function
+        $findTestValue = function ($sections, $testName) {
+            foreach ($sections as $section) {
+                if (!empty($section['results'])) {
+                    foreach ($section['results'] as $result) {
+                        if (strcasecmp($result['original_test_name'] ?? '', $testName) === 0) {
+                            return $result['value'] ?? null;
                         }
                     }
                 }
-                return null;
             }
+            return null;
+        };
 
-            $sections = $labReportData['sections'] ?? [];
+        $sections = $labReportData['sections'] ?? [];
 
-            // Now map all necessary fields
-            LabReport::create([
-                'user_id' => 2,
-                'record_id' => $labReportData['record_id'],
-                // 'file_path' => $file->getPathname() ?? 'empty',
-                'patient_name' => $labReportData['patient_information']['name'] ?? null,
-                'date_of_birth' => $dob,
-                'test_date' => $collectionDate,
-                'chronological_age' => $chronologicalAge,
-                'total_delta' => $labReportData['total_delta'] ?? null,
-                'blue_age' => $labReportData['blue_age'] ?? null,
-                'interpretation' => $labReportData['interpretation'] ?? null,
+        // Save the report
+        LabReport::create([
+            'user_id' => $userId,
+            'record_id' => $labReportData['record_id'] ?? null,
+            'patient_name' => $labReportData['patient_information']['name'] ?? null,
+            'date_of_birth' => $dob,
+            'test_date' => $collectionDate,
+            'chronological_age' => $chronologicalAge,
+            'total_delta' => $labReportData['total_delta'] ?? null,
+            'blue_age' => $labReportData['blue_age'] ?? null,
+            'interpretation' => $labReportData['interpretation'] ?? null,
 
-                // Metabolic Panel
-                'fasting_glucose' => findTestValue($sections, 'Glucose'),
-                'hba1c' => findTestValue($sections, 'Hemoglobin A1c'),
-                'fasting_insulin' => findTestValue($sections, 'Insulin'),
-                'homa_ir' => null, // you may calculate this from glucose & insulin
+            // Metabolic
+            'fasting_glucose' => $findTestValue($sections, 'Glucose'),
+            'hba1c' => $findTestValue($sections, 'Hemoglobin A1c'),
+            'fasting_insulin' => $findTestValue($sections, 'Insulin'),
 
-                // Liver Function
-                'alt' => findTestValue($sections, 'ALT (SGPT)'),
-                'ast' => findTestValue($sections, 'AST (SGOT)'),
-                'ggt' => findTestValue($sections, 'GGT'),
+            // Liver
+            'alt' => $findTestValue($sections, 'ALT (SGPT)'),
+            'ast' => $findTestValue($sections, 'AST (SGOT)'),
+            'ggt' => $findTestValue($sections, 'GGT'),
 
-                // Kidney Function
-                'serum_creatinine' => findTestValue($sections, 'Creatinine'),
-                'egfr' => findTestValue($sections, 'eGFR'),
+            // Kidney
+            'serum_creatinine' => $findTestValue($sections, 'Creatinine'),
+            'egfr' => $findTestValue($sections, 'eGFR'),
 
-                // Inflammation Markers
-                'hs_crp' => findTestValue($sections, 'hs-CRP'),
-                'homocysteine' => findTestValue($sections, 'Homocysteine'),
+            // Inflammation
+            'hs_crp' => $findTestValue($sections, 'hs-CRP'),
+            'homocysteine' => $findTestValue($sections, 'Homocysteine'),
 
-                // Lipid Panel
-                'triglycerides' => findTestValue($sections, 'Triglycerides'),
-                'hdl_cholesterol' => findTestValue($sections, 'HDL Cholesterol'),
-                'lp_a' => findTestValue($sections, 'Lp(a)'),
+            // Lipid
+            'triglycerides' => $findTestValue($sections, 'Triglycerides'),
+            'hdl_cholesterol' => $findTestValue($sections, 'HDL Cholesterol'),
+            'lp_a' => $findTestValue($sections, 'Lp(a)'),
 
-                // Hematologic Panel
-                'wbc_count' => findTestValue($sections, 'WBC'),
-                'lymphocyte_percentage' => findTestValue($sections, 'Lymphs'),
-                'rdw' => findTestValue($sections, 'RDW'),
-                'albumin' => findTestValue($sections, 'Albumin'),
+            // Hematologic
+            'wbc_count' => $findTestValue($sections, 'WBC'),
+            'lymphocyte_percentage' => $findTestValue($sections, 'Lymphs'),
+            'rdw' => $findTestValue($sections, 'RDW'),
+            'albumin' => $findTestValue($sections, 'Albumin'),
 
-                // Genetic Markers
-                'apoe_genotype' => findTestValue($sections, 'APOE Genotype'),
-                'mthfr_c677t' => findTestValue($sections, 'MTHFR C677T'),
-            ]);
+            // Genetics
+            'apoe_genotype' => $findTestValue($sections, 'APOE Genotype'),
+            'mthfr_c677t' => $findTestValue($sections, 'MTHFR C677T'),
+        ]);
 
+        return response()->json(['status' => 'success']);
+    } catch (\Exception $e) {
+        Log::error('Spike webhook error', ['message' => $e->getMessage()]);
+        return response()->json(['error' => 'Server error'], 500);
     }
+}
 
 
     public function calculateAndStore()

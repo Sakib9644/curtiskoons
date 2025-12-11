@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\GeneticRiskFactorController;
 use App\Http\Controllers\Admin\HealthGoalController;
 use App\Http\Controllers\Admin\HealthGoalController as AdminHealthGoalController;
+use App\Http\Controllers\BiomarkerController;
 use App\Http\Controllers\LabReportController;
 use App\Http\Controllers\Web\Backend\Access\PermissionController;
 use App\Http\Controllers\Web\Backend\Access\RoleController;
@@ -393,3 +394,5 @@ Route::controller(LabReportController::class)
         Route::get('/{labReport}/review', 'review')->name('review');
         Route::post('/{labReport}/publish', 'publish')->name('publish');
     });
+    Route::resource('biomarker', BiomarkerController::class);
+

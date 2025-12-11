@@ -167,14 +167,12 @@ class LabReportController extends Controller
 
 public function calculateAndStore()
 {
-    // Fetch the latest lab report for the authenticated user
     $report = LabReport::where('user_id', auth('api')->id())->latest()->first();
 
     if (!$report) {
         return response()->json(['error' => 'No lab reports found for this user.'], 404);
     }
 
-    // Prepare patient data
     $patientData = [
         'chronological_age' => $report->chronological_age,
         'fasting_glucose' => $report->fasting_glucose,
@@ -196,20 +194,18 @@ public function calculateAndStore()
         'wbc_count' => $report->wbc_count,
         'lymphocyte_percentage' => $report->lymphocyte_percentage,
         'albumin' => $report->albumin,
-        'vo2max' => $report->vo2max, // optional, if you store actual values
+        'vo2max' => $report->vo2max,
         'hrv' => $report->hrv,
         'lifestyle_delta' => $report->lifestyle_delta ?? 0,
     ];
 
-    // Calculate Blue Age
     $blueAgeResult = calculateBlueAge($patientData);
 
     $chronAge = $patientData['chronological_age'];
     $coreLabAge = $blueAgeResult['blue_age'];
     $deltaAge = round($coreLabAge - $chronAge, 1);
 
-    // Fitness adjustment
-    $expectedVO2 = 60 - (0.5 * $chronAge); // male reference
+    $expectedVO2 = 60 - (0.5 * $chronAge);
     $expectedHRV = 100 - (0.8 * $chronAge);
 
     $fitnessAdj = 0;
@@ -217,12 +213,10 @@ public function calculateAndStore()
         $fitnessAdj = ($expectedVO2 - $patientData['vo2max']) * 0.1;
     }
 
-    // Lifestyle adjustment
     $lifestyleAdj = $patientData['lifestyle_delta'] ?? 0;
 
     $finalBluegrassAge = round($coreLabAge + $fitnessAdj + $lifestyleAdj, 1);
 
-    // Save to DB
     $report = [
         'blue_age' => $finalBluegrassAge,
         'chronological_age' => (int)$blueAgeResult['chronological_age'],
@@ -235,6 +229,7 @@ public function calculateAndStore()
         'expected_vo2max' => round($expectedVO2, 1),
         'expected_hrv' => round($expectedHRV, 1),
     ];
+
 
     return response()->json([
         'message' => 'Blue Age and all components calculated and saved for the latest lab report of the user.',

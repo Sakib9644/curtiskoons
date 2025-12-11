@@ -97,13 +97,13 @@ if (!function_exists('calculateBlueAge')) {
             'chronological_age'   => $chronologicalAge,
             'total_delta'         => round($totalDelta, 1),
             'optimal_blue_age'    => round($optimalBlueAge, 1),
+            'optimal_range'       => round($optimalBlueAge, 1) . ' years (optimal)', // ✅ Added back for compatibility
             'years_from_optimal'  => round($blueAge - $optimalBlueAge, 1),
             'biomarker_deltas'    => $biomarkerDeltas,
             'last_updated'        => now()->format('F d, Y'),
         ];
     }
 }
-
 function getEmailName($email): string
 {
     $parts = explode('@', $email);

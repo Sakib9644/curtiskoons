@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Biomarker;
+use App\Models\BiomarkerGenetic;
+use App\Models\BiomarkerRange;
 use Illuminate\Http\Request;
 
 class BiomarkerController extends Controller

@@ -65,6 +65,15 @@ class LabReportController extends Controller
                 return back()->with('t-error', 'Upload failed: ' . $uploadResponse->body());
             }
 
+
+            return back()->with('t-success', 'Lab report uploaded and saved successfully!');
+        } catch (\Exception $e) {
+            Log::error('Exception uploading lab report', ['message' => $e->getMessage()]);
+            return back()->with('t-error', 'Error uploading lab report: ' . $e->getMessage());
+        }
+    }
+    public function webhook($uploadResponse){
+
             $labReportData = $uploadResponse->json('lab_report');
 
             if (!$labReportData) {
@@ -112,9 +121,9 @@ class LabReportController extends Controller
 
             // Now map all necessary fields
             LabReport::create([
-                'user_id' => $userId,
+                'user_id' => 2,
                 'record_id' => $labReportData['record_id'],
-                'file_path' => $file->getPathname() ?? 'empty',
+                // 'file_path' => $file->getPathname() ?? 'empty',
                 'patient_name' => $labReportData['patient_information']['name'] ?? null,
                 'date_of_birth' => $dob,
                 'test_date' => $collectionDate,
@@ -158,12 +167,6 @@ class LabReportController extends Controller
                 'mthfr_c677t' => findTestValue($sections, 'MTHFR C677T'),
             ]);
 
-
-            return back()->with('t-success', 'Lab report uploaded and saved successfully!');
-        } catch (\Exception $e) {
-            Log::error('Exception uploading lab report', ['message' => $e->getMessage()]);
-            return back()->with('t-error', 'Error uploading lab report: ' . $e->getMessage());
-        }
     }
 
 

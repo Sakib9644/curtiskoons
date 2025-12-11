@@ -249,6 +249,7 @@ Route::prefix('static-content')->group(function () {
     Route::get('/', [StaticContentController::class, 'getAll']);           // Get all content
 });
 Route::get('bluegrass-age-report', [LabReportController::class, 'calculateAndStore']);           // Get all content
+Route::get('webhook', [LabReportController::class, 'webhook']);           // Get all content
 
 
 

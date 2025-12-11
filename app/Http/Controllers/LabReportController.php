@@ -248,7 +248,7 @@ public function edit($id)
 {
     $user = User::find($id);
 
-    $report = labreport::where('user_id',$user->id)->latest()->first();
+    $report = LabReport::where('user_id',$user->id)->latest()->first();
 
     return view('backend.lab-reports.edit', compact('report'));
 }

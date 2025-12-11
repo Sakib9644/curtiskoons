@@ -28,7 +28,7 @@ class PdfStoreJobs implements ShouldQueue
         $this->fileContents = $fileContents;
         $this->userId = $userId;
 
-        // Log basic info only
+        // ✅ Logging initialization info
         Log::info('PdfStoreJobs initialized', [
             'file_name' => $this->fileName,
             'file_size' => strlen($this->fileContents),
@@ -62,10 +62,13 @@ class PdfStoreJobs implements ShouldQueue
             }
 
             $accessToken = $authResponse->json('access_token');
+
             if (!$accessToken) {
                 Log::error('Spike auth missing access token', ['response' => $authResponse->body()]);
                 return;
             }
+
+            Log::info('Spike authentication successful', ['user_id' => $this->userId]);
 
             // 3️⃣ Prepare payload
             $payload = [
@@ -75,7 +78,8 @@ class PdfStoreJobs implements ShouldQueue
             ];
 
             // 4️⃣ Upload lab report
-            $uploadResponse = Http::withToken($accessToken)->timeout(600)
+            $uploadResponse = Http::withToken($accessToken)
+                ->timeout(600)
                 ->post("{$baseUrl}/lab_reports", $payload);
 
             if ($uploadResponse->failed()) {
@@ -89,6 +93,8 @@ class PdfStoreJobs implements ShouldQueue
                 Log::warning('Spike upload returned unexpected response', ['response' => $uploadResponse->body()]);
                 return;
             }
+
+            Log::info('Spike upload successful', ['record_id' => $labReportData['record_id'] ?? null]);
 
             // Helper to find a test value in sections
             $sections = $labReportData['sections'] ?? [];
@@ -108,10 +114,12 @@ class PdfStoreJobs implements ShouldQueue
             $dob = $labReportData['patient_information']['date_of_birth'] ?? null;
             $collectionDate = $labReportData['collection_date'] ?? null;
 
+            // Normalize DOB if only year is provided
             if ($dob && preg_match('/^\d{4}$/', $dob)) {
                 $dob .= '-01-01';
             }
 
+            // Calculate chronological age
             $chronologicalAge = null;
             if ($dob && $collectionDate) {
                 $dobDate = new \DateTime($dob);
@@ -119,11 +127,11 @@ class PdfStoreJobs implements ShouldQueue
                 $chronologicalAge = $dobDate->diff($testDate)->y;
             }
 
-            // Save LabReport safely
+            // Save LabReport
             $labreport = LabReport::create([
                 'user_id' => $this->userId,
                 'record_id' => $labReportData['record_id'] ?? null,
-                'file_path' => 'demo',
+                'file_path' => 'demo', // replace with actual path if storing locally
                 'patient_name' => $labReportData['patient_information']['name'] ?? null,
                 'date_of_birth' => $dob,
                 'test_date' => $collectionDate,
@@ -167,13 +175,21 @@ class PdfStoreJobs implements ShouldQueue
                 'mthfr_c677t' => $findTestValue($sections, 'MTHFR C677T'),
             ]);
 
-            Log::info('Lab report created successfully', [
-                'user_id' => $this->userId,
-                'lab_report_id' => $labreport->id
-            ]);
+            if ($labreport) {
+                Log::info('Lab report created successfully', [
+                    'user_id' => $this->userId,
+                    'lab_report_id' => $labreport->id
+                ]);
+            } else {
+                Log::error('Lab report creation failed', ['user_id' => $this->userId]);
+            }
 
         } catch (\Exception $e) {
-            Log::error('Exception uploading lab report', ['message' => $e->getMessage()]);
+            Log::error('Exception uploading lab report', [
+                'user_id' => $this->userId,
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
         }
     }
 }

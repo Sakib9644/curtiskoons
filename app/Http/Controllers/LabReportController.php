@@ -176,7 +176,7 @@ public function calculateAndStore()
 
     // Calculate chronological age from birth date
     $user = auth('api')->user();
-    $chronologicalAge = calculateChronologicalAge($user->birth_date);
+    $chronologicalAge = calculateChronologicalAge(20);
 
     // Prepare patient data
     $patientData = [

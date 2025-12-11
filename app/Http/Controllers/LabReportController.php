@@ -209,7 +209,7 @@ public function calculateAndStore()
     $result = calculateBlueAge($patientData);
 
     // Update the report in database
-    $report->update([
+    $report = [
         'chronological_age' => $result['chronological_age'],
         'blue_age' => $result['blue_age'], // ← This now exists!
         'core_lab_age' => $result['core_lab_age'],
@@ -220,7 +220,7 @@ public function calculateAndStore()
         'expected_vo2max' => $result['expected_vo2max'],
         'expected_hrv' => $result['expected_hrv'],
         'last_updated' => now(),
-    ]);
+    ];
 
     return response()->json([
         'message' => 'Blue Age calculated and saved successfully.',

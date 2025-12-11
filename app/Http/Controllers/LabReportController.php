@@ -253,7 +253,7 @@ public function edit($id)
     return view('backend.lab-reports.edit', compact('report'));
 }
 
-public function update(Request $request, LabReport $report)
+public function update(Request $request,  $id)
 {
     $data = $request->validate([
         'patient_name' => 'nullable|string|max:255',
@@ -289,10 +289,10 @@ public function update(Request $request, LabReport $report)
         'mthfr_c677t' => 'nullable|string|max:5',
     ]);
 
+    $report = LabReport::find($id);
+
     $report->update($data);
 
-    // Optional: Recalculate blue age dynamically if needed
-    $report->update(calculateBlueAge($report->toArray()));
 
     return redirect()->back()->with('t-success', 'Lab report updated successfully.');
 }

@@ -71,13 +71,14 @@ class UserController extends Controller
                                         onclick="assignGroup(' . $user->id . ', \'' . $user->name . '\')">Assign Group</button>';
                         $buttons .= '<button class="btn btn-sm btn-success me-1" data-bs-toggle="modal" data-bs-target="#uploadLabModal"
                                         onclick="uploadLab(' . $user->id . ', \'' . $user->name . '\')">Upload Lab</button>';
-                        $buttons .= '<a href="' . route('admin.lab_reports.edit', $user->id) . '" class="btn btn-sm btn-warning me-1">Lab Reports</a>';
-
+                        if ($user->labreport) {
+                            $buttons .= '<a href="' . route('admin.lab_reports.edit', $user->id) . '" class="btn btn-sm btn-warning me-1">Lab Reports</a>';
+                        }
                     }
                     if (auth()->user()->can('delete')) {
                         $buttons .= '<form action="' . route('admin.users.destroy', $user->id) . '" method="POST" class="d-inline ms-1" onsubmit="return confirm(\'Are you sure you want to delete this user?\')">'
-                                    . csrf_field() . method_field('DELETE') .
-                                    '<button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                            . csrf_field() . method_field('DELETE') .
+                            '<button type="submit" class="btn btn-sm btn-danger">Delete</button>
                                 </form>';
                     }
 
@@ -85,7 +86,7 @@ class UserController extends Controller
                     return $buttons;
                 })
 
-                ->rawColumns(['user','group','status','action'])
+                ->rawColumns(['user', 'group', 'status', 'action'])
                 ->make(true);
         }
 

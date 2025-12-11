@@ -66,7 +66,7 @@ class UserController extends Controller
                                         onclick="assignGroup(' . $user->id . ', \'' . $user->name . '\')">Assign Group</button>';
                         $buttons .= '<button class="btn btn-sm btn-success me-1" data-bs-toggle="modal" data-bs-target="#uploadLabModal"
                                         onclick="uploadLab(' . $user->id . ', \'' . $user->name . '\')">Upload Lab</button>';
-                        if ($user->labreport) {
+                        if ($user->labreport->count() > 0) {
                             $buttons .= '<a href="' . route('admin.lab_reports.edit', $user->id) . '" class="btn btn-sm btn-warning me-1">Lab Reports</a>';
                         }
                     }

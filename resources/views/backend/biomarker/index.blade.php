@@ -49,7 +49,7 @@
                                     <tbody>
                                         @forelse($biomarkers as $biomarker)
                                         <tr>
-                                            <td>{{ $biomarker->id }}</td>
+                                            <td>{{ $loop->iteration }}</td>
                                             <td>{{ $biomarker->name }}</td>
                                             <td>{{ $biomarker->label }}</td>
                                             <td>{{ $biomarker->unit ?? 'N/A' }}</td>

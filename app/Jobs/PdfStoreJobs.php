@@ -171,7 +171,7 @@ Log::info('File info:', [
                 'mthfr_c677t' => $findTestValue($sections, 'MTHFR C677T'),
             ]);
 
-            Log::info(   $labreport);
+Log::info('Lab Report created:', $labreport->toArray());
 
         } catch (\Exception $e) {
             Log::error('Exception uploading lab report', ['message' => $e->getMessage()]);

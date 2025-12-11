@@ -50,7 +50,7 @@ class UserController extends Controller
 
                 ->addColumn('created_at', function ($user) {
                     return
-                                 $user->created_at->format('Y-M-d');
+                                 $user?->created_at->format('Y-M-d');
 
                 })
 

@@ -27,11 +27,13 @@ class PdfStoreJobs implements ShouldQueue
         $this->fileName = $fileName;
         $this->fileContents = $fileContents;
         $this->userId = $userId;
-Log::info('File info:', [
-    'file_name' => $this->fileName,
-    'file_contents' => $this->fileContents,
-    'user_id' => $this->userId
-]);
+
+        // Log basic info only
+        Log::info('PdfStoreJobs initialized', [
+            'file_name' => $this->fileName,
+            'file_size' => strlen($this->fileContents),
+            'user_id' => $this->userId
+        ]);
     }
 
     /**
@@ -39,12 +41,9 @@ Log::info('File info:', [
      */
     public function handle(): void
     {
-
         $appId = env('SPIKE_APPLICATION_ID');
         $hmacKey = env('SPIKE_HMAC_KEY');
         $baseUrl = env('SPIKE_API_BASE_URL', 'https://app-api.spikeapi.com/v3');
-
-
 
         try {
             // 1️⃣ Generate HMAC signature
@@ -63,7 +62,6 @@ Log::info('File info:', [
             }
 
             $accessToken = $authResponse->json('access_token');
-
             if (!$accessToken) {
                 Log::error('Spike auth missing access token', ['response' => $authResponse->body()]);
                 return;
@@ -110,12 +108,10 @@ Log::info('File info:', [
             $dob = $labReportData['patient_information']['date_of_birth'] ?? null;
             $collectionDate = $labReportData['collection_date'] ?? null;
 
-            // Normalize DOB if only year is provided
             if ($dob && preg_match('/^\d{4}$/', $dob)) {
                 $dob .= '-01-01';
             }
 
-            // Calculate chronological age
             $chronologicalAge = null;
             if ($dob && $collectionDate) {
                 $dobDate = new \DateTime($dob);
@@ -123,10 +119,10 @@ Log::info('File info:', [
                 $chronologicalAge = $dobDate->diff($testDate)->y;
             }
 
-            // Save LabReport
-           $labreport = LabReport::create([
+            // Save LabReport safely
+            $labreport = LabReport::create([
                 'user_id' => $this->userId,
-                'record_id' => $labReportData['record_id'],
+                'record_id' => $labReportData['record_id'] ?? null,
                 'file_path' => 'demo',
                 'patient_name' => $labReportData['patient_information']['name'] ?? null,
                 'date_of_birth' => $dob,
@@ -170,9 +166,11 @@ Log::info('File info:', [
                 'apoe_genotype' => $findTestValue($sections, 'APOE Genotype'),
                 'mthfr_c677t' => $findTestValue($sections, 'MTHFR C677T'),
             ]);
-Log::info('User created successfully', ['user_id' => $this->userId]);
 
-// Log::info('Lab Report created:', $labreport->toArray());
+            Log::info('Lab report created successfully', [
+                'user_id' => $this->userId,
+                'lab_report_id' => $labreport->id
+            ]);
 
         } catch (\Exception $e) {
             Log::error('Exception uploading lab report', ['message' => $e->getMessage()]);

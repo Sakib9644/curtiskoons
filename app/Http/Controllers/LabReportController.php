@@ -223,7 +223,7 @@ class LabReportController extends Controller
             'blue_age' => $finalBluegrassAge,
             'chronological_age' => (int)$blueAgeResult['chronological_age'],
             'optimal_range' => $blueAgeResult['optimal_range'],
-            'last_updated' => Carbon::parse($report['created_at'])->format('F j, Y'),
+            'last_updated' => $report['created_at']->format('F j, Y'),
             'delta_age' => $deltaAge,
             'core_lab_age' => $coreLabAge,
             'fitness_adj' => round($fitnessAdj, 1),

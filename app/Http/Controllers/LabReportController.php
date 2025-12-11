@@ -294,7 +294,7 @@ public function update(Request $request, LabReport $report)
     // Optional: Recalculate blue age dynamically if needed
     $report->update(calculateBlueAge($report->toArray()));
 
-    return redirect()->back()>with('t-success', 'Lab report updated successfully.');
+    return redirect()->back()->with('t-success', 'Lab report updated successfully.');
 }
 
 }

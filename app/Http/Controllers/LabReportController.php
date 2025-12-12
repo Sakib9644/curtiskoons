@@ -218,6 +218,7 @@ class LabReportController extends Controller
         $lifestyleAdj = $patientData['lifestyle_delta'] ?? 0;
 
         $finalBluegrassAge = round($coreLabAge + $fitnessAdj + $lifestyleAdj, 1);
+            $report->blue_age = $finalBluegrassAge;
 
         $report = [
             'blue_age' => $finalBluegrassAge,
@@ -298,6 +299,8 @@ class LabReportController extends Controller
             $lifestyleAdj = $patientData['lifestyle_delta'] ?? 0;
 
             $finalBluegrassAge = round($coreLabAge + $fitnessAdj + $lifestyleAdj, 1);
+
+            $singleReport->blue_age = $finalBluegrassAge;
 
             // Store full result for this report
             $allResults[] = [
@@ -389,13 +392,13 @@ class LabReportController extends Controller
 
 
         return response()->json([
-            'message' => 'All Blue Age Reports Calculated Successfully.',
+            'message' => 'All Blue Age Date and Blue Age Retrive Successfully',
             'user_id' => auth('api')->id(),
             'reports' => $report->map(function($r){
                 return [
 
                     'test_date' =>$r->test_date,
-                    'test_date' =>$r->test_date,
+                    'test_date' =>$r->blue_age,
 
                 ];
             })

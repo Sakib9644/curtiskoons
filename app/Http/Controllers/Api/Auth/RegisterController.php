@@ -64,13 +64,25 @@ class RegisterController extends Controller
             ]);
 
             // Assign default role 'user'
-            $userRole = Role::where('name', 'local_user')->first();
+            $userRole = Role::where('name', 'user')->first();
             if ($userRole) {
                 $user->assignRole($userRole);
             }
 
             // Notify admins
+            $notiData = [
+                'user_id' => $user->id,
+                'title' => 'User registered successfully.',
+                'body' => 'A new user has registered.'
+            ];
 
+            $admins = User::role('admin', 'api')->get();
+            foreach ($admins as $admin) {
+                $admin->notify(new RegistrationNotification($notiData));
+                if (config('settings.reverb') === 'on') {
+                    broadcast(new RegistrationNotificationEvent($notiData, $admin->id))->toOthers();
+                }
+            }
 
             // Send OTP email
             Mail::to($user->email)->send(new OtpMail($user->otp, $user, 'Verify Your Email Address'));

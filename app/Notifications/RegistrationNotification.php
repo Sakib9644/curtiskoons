@@ -9,13 +9,16 @@ use Illuminate\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 
-class RegistrationNotification extends Notification  implements ShouldQueue
+class RegistrationNotification extends Notification implements ShouldQueue
 {
+    use Queueable; // <-- REQUIRED
 
     public $data;
+
     public function __construct($data)
     {
         $this->data = $data;
+
         $user = User::find($data['user_id']);
         $this->data['name'] = $user->name;
         $this->data['email'] = $user->email;
@@ -45,5 +48,4 @@ class RegistrationNotification extends Notification  implements ShouldQueue
             'body' => $this->data['body']
         ];
     }
-
 }

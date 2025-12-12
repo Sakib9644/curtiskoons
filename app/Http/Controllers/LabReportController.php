@@ -240,97 +240,94 @@ class LabReportController extends Controller
         ]);
     }
 
-  public function allblueagereports()
-{
-    $reports = LabReport::where('user_id', auth('api')->id())->get();
+    public function allblueagereports()
+    {
+        $reports = LabReport::where('user_id', auth('api')->id())->get();
 
-    if ($reports->isEmpty()) {
-        return response()->json(['error' => 'No lab reports found for this user.'], 404);
-    }
-
-    $allResults = [];
-
-    foreach ($reports as $singleReport) {
-
-        // Prepare patient data for BlueAge calculation
-        $patientData = [
-            'chronological_age' => $singleReport->chronological_age,
-            'fasting_glucose' => $singleReport->fasting_glucose,
-            'hba1c' => $singleReport->hba1c,
-            'fasting_insulin' => $singleReport->fasting_insulin,
-            'alt' => $singleReport->alt,
-            'ast' => $singleReport->ast,
-            'ggt' => $singleReport->ggt,
-            'serum_creatinine' => $singleReport->serum_creatinine,
-            'egfr' => $singleReport->egfr,
-            'hs_crp' => $singleReport->hs_crp,
-            'homocysteine' => $singleReport->homocysteine,
-            'triglycerides' => $singleReport->triglycerides,
-            'hdl_cholesterol' => $singleReport->hdl_cholesterol,
-            'lpa' => $singleReport->lp_a,
-            'apoe' => $singleReport->apoe_genotype,
-            'mthfr' => $singleReport->mthfr_c677t,
-            'rdw' => $singleReport->rdw,
-            'wbc_count' => $singleReport->wbc_count,
-            'lymphocyte_percentage' => $singleReport->lymphocyte_percentage,
-            'albumin' => $singleReport->albumin,
-            'vo2max' => $singleReport->vo2max,
-            'hrv' => $singleReport->hrv,
-            'lifestyle_delta' => $singleReport->lifestyle_delta ?? 0,
-        ];
-
-        // Blue Age Calculation Core
-        $blueAgeResult = calculateBlueAge($patientData);
-
-        $chronAge = $patientData['chronological_age'];
-        $coreLabAge = $blueAgeResult['blue_age'];
-        $deltaAge = round($coreLabAge - $chronAge, 1);
-
-        // Fitness Adjustments
-        $expectedVO2 = 60 - (0.5 * $chronAge);
-        $expectedHRV = 100 - (0.8 * $chronAge);
-
-        $fitnessAdj = 0;
-        if ($patientData['vo2max'] < $expectedVO2) {
-            $fitnessAdj = ($expectedVO2 - $patientData['vo2max']) * 0.1;
+        if ($reports->isEmpty()) {
+            return response()->json(['error' => 'No lab reports found for this user.'], 404);
         }
 
-        $lifestyleAdj = $patientData['lifestyle_delta'] ?? 0;
+        $allResults = [];
 
-        $finalBluegrassAge = round($coreLabAge + $fitnessAdj + $lifestyleAdj, 1);
+        foreach ($reports as $singleReport) {
 
-        // Store full result for this report
-        $allResults[] = [
-            'blue_age' => $finalBluegrassAge,
-            'chronological_age' => (int)$blueAgeResult['chronological_age'],
-            'optimal_range' => $blueAgeResult['optimal_range'],
-            'last_updated' => Carbon::parse($singleReport['test_date'])->format('F j, Y'),
-            'delta_age' => $deltaAge,
-            'core_lab_age' => $coreLabAge,
-            'fitness_adj' => round($fitnessAdj, 1),
-            'lifestyle_adj' => round($lifestyleAdj, 1),
-            'expected_vo2max' => round($expectedVO2, 1),
-            'expected_hrv' => round($expectedHRV, 1),
-        ];
+            // Prepare patient data for BlueAge calculation
+            $patientData = [
+                'chronological_age' => $singleReport->chronological_age,
+                'fasting_glucose' => $singleReport->fasting_glucose,
+                'hba1c' => $singleReport->hba1c,
+                'fasting_insulin' => $singleReport->fasting_insulin,
+                'alt' => $singleReport->alt,
+                'ast' => $singleReport->ast,
+                'ggt' => $singleReport->ggt,
+                'serum_creatinine' => $singleReport->serum_creatinine,
+                'egfr' => $singleReport->egfr,
+                'hs_crp' => $singleReport->hs_crp,
+                'homocysteine' => $singleReport->homocysteine,
+                'triglycerides' => $singleReport->triglycerides,
+                'hdl_cholesterol' => $singleReport->hdl_cholesterol,
+                'lpa' => $singleReport->lp_a,
+                'apoe' => $singleReport->apoe_genotype,
+                'mthfr' => $singleReport->mthfr_c677t,
+                'rdw' => $singleReport->rdw,
+                'wbc_count' => $singleReport->wbc_count,
+                'lymphocyte_percentage' => $singleReport->lymphocyte_percentage,
+                'albumin' => $singleReport->albumin,
+                'vo2max' => $singleReport->vo2max,
+                'hrv' => $singleReport->hrv,
+                'lifestyle_delta' => $singleReport->lifestyle_delta ?? 0,
+            ];
 
+            // Blue Age Calculation Core
+            $blueAgeResult = calculateBlueAge($patientData);
 
+            $chronAge = $patientData['chronological_age'];
+            $coreLabAge = $blueAgeResult['blue_age'];
+            $deltaAge = round($coreLabAge - $chronAge, 1);
+
+            // Fitness Adjustments
+            $expectedVO2 = 60 - (0.5 * $chronAge);
+            $expectedHRV = 100 - (0.8 * $chronAge);
+
+            $fitnessAdj = 0;
+            if ($patientData['vo2max'] < $expectedVO2) {
+                $fitnessAdj = ($expectedVO2 - $patientData['vo2max']) * 0.1;
+            }
+
+            $lifestyleAdj = $patientData['lifestyle_delta'] ?? 0;
+
+            $finalBluegrassAge = round($coreLabAge + $fitnessAdj + $lifestyleAdj, 1);
+
+            // Store full result for this report
+            $allResults[] = [
+                'blue_age' => $finalBluegrassAge,
+                'chronological_age' => (int)$blueAgeResult['chronological_age'],
+                'optimal_range' => $blueAgeResult['optimal_range'],
+                'last_updated' => Carbon::parse($singleReport['test_date'])->format('F j, Y'),
+                'delta_age' => $deltaAge,
+                'core_lab_age' => $coreLabAge,
+                'fitness_adj' => round($fitnessAdj, 1),
+                'lifestyle_adj' => round($lifestyleAdj, 1),
+                'expected_vo2max' => round($expectedVO2, 1),
+                'expected_hrv' => round($expectedHRV, 1),
+            ];
+        }
+
+        return response()->json([
+            'message' => 'All Blue Age Reports Calculated Successfully.',
+            'user_id' => auth('api')->id(),
+            'reports' => $allResults
+        ]);
     }
 
-    return response()->json([
-        'message' => 'All Blue Age Reports Calculated Successfully.',
-        'user_id' => auth('api')->id(),
-        'reports' => $allResults
-    ]);
-}
+    public function report($id)
+    {
 
-    public function report($id){
+        $user = User::find($id);
 
-          $user = User::find($id);
-
-        $report = LabReport::select('id','test_date')->where('user_id', $user->id)->get();
+        $report = LabReport::select('id', 'test_date')->where('user_id', $user->id)->get();
         return view('backend.lab-reports.reports', compact('report'));
-
-
     }
 
     public function edit($id)
@@ -383,5 +380,25 @@ class LabReportController extends Controller
 
 
         return redirect()->back()->with('t-success', 'Lab report updated successfully.');
+    }
+
+    public function date()
+    {
+
+        $report = LabReport::where('user_id', auth('api')->id())->get();
+
+
+        return response()->json([
+            'message' => 'All Blue Age Reports Calculated Successfully.',
+            'user_id' => auth('api')->id(),
+            'reports' => $report->map(function($r){
+                return [
+
+                    'test_date' =>$r->test_date,
+                    'test_date' =>$r->test_date,
+
+                ];
+            })
+        ]);
     }
 }

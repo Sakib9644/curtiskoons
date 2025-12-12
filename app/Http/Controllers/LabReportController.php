@@ -167,15 +167,16 @@ class LabReportController extends Controller
     }
 
 
-    public function calculateAndStore()
+    public function allblueagereports()
     {
-        $report = LabReport::where('user_id', auth('api')->id())->latest()->first();
+        $reports = LabReport::where('user_id', auth('api')->id())->get();
 
-        if (!$report) {
+        if ($reports->isempty()) {
             return response()->json(['error' => 'No lab reports found for this user.'], 404);
         }
 
-        $patientData = [
+        foreach( $reports as $report){
+            $patientData = [
             'chronological_age' => $report->chronological_age,
             'fasting_glucose' => $report->fasting_glucose,
             'hba1c' => $report->hba1c,
@@ -200,6 +201,7 @@ class LabReportController extends Controller
             'hrv' => $report->hrv,
             'lifestyle_delta' => $report->lifestyle_delta ?? 0,
         ];
+        }
 
         $blueAgeResult = calculateBlueAge($patientData);
 

@@ -317,7 +317,8 @@ class LabReportController extends Controller
 
         return response()->json([
             'message' => 'All Blue Age Reports Calculated Successfully.',
-            'user_id' => auth('api')->id(),
+            'blue' => $blue,
+            'testdate' => $testdate,
 
         ]);
     }

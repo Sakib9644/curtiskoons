@@ -218,7 +218,10 @@ class LabReportController extends Controller
         $lifestyleAdj = $patientData['lifestyle_delta'] ?? 0;
 
         $finalBluegrassAge = round($coreLabAge + $fitnessAdj + $lifestyleAdj, 1);
-            $report->blue_age = $finalBluegrassAge;
+
+        $report->blue_age = $finalBluegrassAge;
+
+        $report->save();
 
         $report = [
             'blue_age' => $finalBluegrassAge,
@@ -301,6 +304,7 @@ class LabReportController extends Controller
             $finalBluegrassAge = round($coreLabAge + $fitnessAdj + $lifestyleAdj, 1);
 
             $singleReport->blue_age = $finalBluegrassAge;
+            $singleReport->save();
 
             // Store full result for this report
             $allResults[] = [

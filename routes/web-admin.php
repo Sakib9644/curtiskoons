@@ -390,6 +390,7 @@ Route::controller(LabReportController::class)
     ->group(function () {
         Route::get('/', 'index')->name('index');
         Route::get('/create', 'create')->name('create');
+        Route::get('/all/report', 'report')->name('report');
         Route::get('/user/report', 'edit')->name('edit');
         Route::PUT('/lab/update', 'update')->name('update');
         Route::post('/', 'store')->name('store'); // <-- POST matches /users/{user}/lab-reports

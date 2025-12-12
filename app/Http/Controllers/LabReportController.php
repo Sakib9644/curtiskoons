@@ -239,17 +239,22 @@ class LabReportController extends Controller
             'report' => $report
         ]);
     }
-    public function index()
-    {
-        $reports = LabReport::latest()->paginate(20); // paginate for admin view
-        return view('lab-reports.index', compact('reports'));
+
+
+    public function report($id){
+
+          $user = User::find($id);
+
+        $report = LabReport::select('id','test_date')->where('user_id', $user->id)->get();
+        return view('backend.lab-reports.reports', compact('report'));
+
+
     }
 
     public function edit($id)
     {
-        $user = User::find($id);
 
-        $report = LabReport::where('user_id', $user->id)->latest()->first();
+        $report = LabReport::find($id);
 
         return view('backend.lab-reports.edit', compact('report'));
     }

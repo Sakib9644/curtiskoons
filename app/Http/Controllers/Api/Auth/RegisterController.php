@@ -76,14 +76,7 @@ class RegisterController extends Controller
                 'body' => 'A new user has registered.'
             ];
 
-            $admins = User::role('user', 'web')->get();
-            foreach ($admins as $admin) {
-                $admin->notify(new RegistrationNotification($notiData));
-                if (config('settings.reverb') === 'on') {
-                    broadcast(new RegistrationNotificationEvent($notiData, $admin->id))->toOthers();
-                }
-            }
-
+         
             // Send OTP email
             Mail::to($user->email)->send(new OtpMail($user->otp, $user, 'Verify Your Email Address'));
 

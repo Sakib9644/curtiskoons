@@ -252,7 +252,9 @@ class LabReportController extends Controller
             return response()->json(['error' => 'No lab reports found for this user.'], 404);
         }
 
-        $allResults = [];
+
+            $blue = [];
+            $testdate = [];
 
         foreach ($reports as $singleReport) {
 
@@ -305,17 +307,18 @@ class LabReportController extends Controller
 
             $singleReport->blue_age = $finalBluegrassAge;
             $singleReport->save();
-             $blue = [];
-             $testdate = [];
+
+
+
             $blue[] = $finalBluegrassAge;
             $testdate[] = $singleReport['test_date'];
+
         }
 
         return response()->json([
             'message' => 'All Blue Age Reports Calculated Successfully.',
             'user_id' => auth('api')->id(),
-            'blue' =>  $blue,
-            'test_date' =>   $testdate,
+
         ]);
     }
 

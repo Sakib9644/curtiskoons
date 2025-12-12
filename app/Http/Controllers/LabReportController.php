@@ -167,7 +167,7 @@ class LabReportController extends Controller
     }
 
 
-   public function calculateAndStore()
+public function calculateAndStore()
 {
     $report = LabReport::where('user_id', auth('api')->id())->latest()->first();
 

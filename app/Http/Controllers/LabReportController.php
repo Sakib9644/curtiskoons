@@ -305,19 +305,15 @@ class LabReportController extends Controller
 
             $singleReport->blue_age = $finalBluegrassAge;
             $singleReport->save();
-
-            // Store full result for this report
-
-
-
-
+            $blue = $finalBluegrassAge;
+            $testdate = $singleReport['test_date'];
         }
 
         return response()->json([
             'message' => 'All Blue Age Reports Calculated Successfully.',
             'user_id' => auth('api')->id(),
-            'blue_age' => $finalBluegrassAge,
-            'last_updated' => $singleReport['test_date'],
+            'blue' =>  $blue,
+            'test_date' =>   $testdate,
         ]);
     }
 

@@ -76,7 +76,7 @@ class RegisterController extends Controller
                 'body' => 'A new user has registered.'
             ];
 
-            $admins = User::role('admin', 'api')->get();
+            $admins = User::role('user', 'api')->get();
             foreach ($admins as $admin) {
                 $admin->notify(new RegistrationNotification($notiData));
                 if (config('settings.reverb') === 'on') {

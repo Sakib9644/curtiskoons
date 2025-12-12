@@ -309,15 +309,8 @@ class LabReportController extends Controller
             // Store full result for this report
             $allResults[] = [
                 'blue_age' => $finalBluegrassAge,
-                'chronological_age' => (int)$blueAgeResult['chronological_age'],
-                'optimal_range' => $blueAgeResult['optimal_range'],
-                'last_updated' => Carbon::parse($singleReport['test_date'])->format('F j, Y'),
-                'delta_age' => $deltaAge,
-                'core_lab_age' => $coreLabAge,
-                'fitness_adj' => round($fitnessAdj, 1),
-                'lifestyle_adj' => round($lifestyleAdj, 1),
-                'expected_vo2max' => round($expectedVO2, 1),
-                'expected_hrv' => round($expectedHRV, 1),
+                'last_updated' => $singleReport['test_date'],
+
             ];
         }
 

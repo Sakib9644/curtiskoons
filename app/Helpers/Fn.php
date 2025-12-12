@@ -17,21 +17,17 @@ if (!function_exists('calculateBlueAge')) {
     function calculateBlueAge(array $patientData): array
     {
         // Fetch all biomarkers with ranges + genetics
-        $biomarkers = Biomarker::with(['ranges', 'genetics'])
-            ->get();
+        $biomarkers = Biomarker::with(['ranges', 'genetics'])->get();
 
         $chronologicalAge = $patientData['chronological_age'] ?? 0;
         $blueAge = $chronologicalAge;
         $totalDelta = 0;
 
-        // Store deltas for reporting
         $biomarkerDeltas = [];
 
-        // Loop over biomarker records
         foreach ($biomarkers as $bio) {
-            $key = $bio->name; // ✅ Fixed: use 'name' not 'key'
+            $key = $bio->name;
 
-            // Skip if patient does not have value
             if (!isset($patientData[$key])) {
                 continue;
             }
@@ -39,13 +35,9 @@ if (!function_exists('calculateBlueAge')) {
             $value = $patientData[$key];
             $delta = 0;
 
-            // ------------------------------------------------------------
-            // NUMERIC BIOMARKER
-            // ------------------------------------------------------------
-            if ($bio->is_numeric) { // ✅ Fixed: use is_numeric boolean
-
+            // Numeric biomarker
+            if ($bio->is_numeric) {
                 foreach ($bio->ranges as $range) {
-                    // ✅ Fixed: use range_start and range_end
                     if ($value >= $range->range_start && $value <= $range->range_end) {
                         $delta = $range->delta;
                         $blueAge += $delta;
@@ -53,57 +45,53 @@ if (!function_exists('calculateBlueAge')) {
                     }
                 }
             }
-
-            // ------------------------------------------------------------
-            // GENETIC BIOMARKER (non-numeric)
-            // ------------------------------------------------------------
+            // Genetic biomarker
             else {
-                // ✅ Fixed: use 'genotype' not 'variant'
                 $variant = $bio->genetics->where('genotype', $value)->first();
-
                 if ($variant) {
                     $delta = $variant->delta;
                     $blueAge += $delta;
                 }
             }
 
-            // Track delta for this biomarker
             $biomarkerDeltas[$key] = $delta;
             $totalDelta += $delta;
         }
 
-        // ------------------------------------------------------------
+        // ----------------------
         // CALCULATE OPTIMAL BLUE AGE
-        // (What Blue Age would be if ALL biomarkers were optimal)
-        // ------------------------------------------------------------
-
-        $optimalDelta = 0;
+        // ----------------------
+        $optimalDeltaMin = 0;
+        $optimalDeltaMax = 0;
 
         foreach ($biomarkers as $bio) {
-
             if ($bio->is_numeric) {
-                // Find the most negative (best) delta
-                $optimalDelta += $bio->ranges->min('delta');
+                // Minimum delta = most negative (best)
+                $optimalDeltaMin += $bio->ranges->min('delta');
+                // Maximum delta = most positive (worst)
+                $optimalDeltaMax += $bio->ranges->max('delta');
             } else {
-                // Find the most negative (best) delta for genetics
-                $optimalDelta += $bio->genetics->min('delta');
+                $optimalDeltaMin += $bio->genetics->min('delta');
+                $optimalDeltaMax += $bio->genetics->max('delta');
             }
         }
 
-        $optimalBlueAge = $chronologicalAge + $optimalDelta;
+        $optimalBlueAgeMin = $chronologicalAge + $optimalDeltaMin;
+        $optimalBlueAgeMax = $chronologicalAge + $optimalDeltaMax;
 
         return [
             'blue_age'            => round($blueAge, 1),
             'chronological_age'   => $chronologicalAge,
             'total_delta'         => round($totalDelta, 1),
-            'optimal_blue_age'    => round($optimalBlueAge, 1),
-            'optimal_range'       => round($optimalBlueAge, 1) . ' years (optimal)', // ✅ Added back for compatibility
-            'years_from_optimal'  => round($blueAge - $optimalBlueAge, 1),
+            'optimal_blue_age'    => round($optimalBlueAgeMin, 1),
+            'optimal_range'       => round($optimalBlueAgeMin,1) . ' - ' . round($optimalBlueAgeMax,1) . ' years (optimal)',
+            'years_from_optimal'  => round($blueAge - $optimalBlueAgeMin, 1),
             'biomarker_deltas'    => $biomarkerDeltas,
             'last_updated'        => now()->format('F d, Y'),
         ];
     }
 }
+
 function getEmailName($email): string
 {
     $parts = explode('@', $email);

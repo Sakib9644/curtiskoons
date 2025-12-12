@@ -305,8 +305,10 @@ class LabReportController extends Controller
 
             $singleReport->blue_age = $finalBluegrassAge;
             $singleReport->save();
-            $blue = $finalBluegrassAge;
-            $testdate = $singleReport['test_date'];
+             $blue = [];
+             $testdate = [];
+            $blue[] = $finalBluegrassAge;
+            $testdate[] = $singleReport['test_date'];
         }
 
         return response()->json([

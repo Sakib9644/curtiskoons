@@ -16,26 +16,20 @@ function getFileName($file): string
 if (!function_exists('calculateBlueAge')) {
     function calculateBlueAge(array $patientData): array
     {
-        // Fetch all biomarkers with ranges + genetics
         $biomarkers = Biomarker::with(['ranges', 'genetics'])->get();
 
-        $chronologicalAge = $patientData['chronological_age'] ?? 0;
-        $blueAge = $chronologicalAge;
+        $chronAge = $patientData['chronological_age'] ?? 0;
+        $blueAge = $chronAge;
         $totalDelta = 0;
-
         $biomarkerDeltas = [];
 
         foreach ($biomarkers as $bio) {
             $key = $bio->name;
-
-            if (!isset($patientData[$key])) {
-                continue;
-            }
+            if (!isset($patientData[$key])) continue;
 
             $value = $patientData[$key];
             $delta = 0;
 
-            // Numeric biomarker
             if ($bio->is_numeric) {
                 foreach ($bio->ranges as $range) {
                     if ($value >= $range->range_start && $value <= $range->range_end) {
@@ -44,9 +38,7 @@ if (!function_exists('calculateBlueAge')) {
                         break;
                     }
                 }
-            }
-            // Genetic biomarker
-            else {
+            } else {
                 $variant = $bio->genetics->where('genotype', $value)->first();
                 if ($variant) {
                     $delta = $variant->delta;
@@ -59,35 +51,39 @@ if (!function_exists('calculateBlueAge')) {
         }
 
         // ----------------------
-        // CALCULATE OPTIMAL BLUE AGE
+        // CALCULATE REALISTIC OPTIMAL RANGE
         // ----------------------
-        $optimalDeltaMin = 0;
-        $optimalDeltaMax = 0;
+        $optimalLower = 0; // sum of best possible deltas
+        $optimalUpper = 0; // sum of healthy/normal deltas
 
         foreach ($biomarkers as $bio) {
             if ($bio->is_numeric) {
-                // Minimum delta = most negative (best)
-                $optimalDeltaMin += $bio->ranges->min('delta');
-                // Maximum delta = most positive (worst)
-                $optimalDeltaMax += $bio->ranges->max('delta');
+                // Lower bound: most negative delta (optimal)
+                $minDelta = $bio->ranges->where('delta', '<=', 0)->min('delta') ?? 0;
+                $optimalLower += $minDelta;
+
+                // Upper bound: largest delta within normal/healthy range (<=0 or small positive)
+                $normalDelta = $bio->ranges->where('delta', '<=', 0)->max('delta') ?? 0;
+                $optimalUpper += $normalDelta;
             } else {
-                $optimalDeltaMin += $bio->genetics->min('delta');
-                $optimalDeltaMax += $bio->genetics->max('delta');
+                // Genetic marker: healthiest variant = min delta
+                $optimalLower += $bio->genetics->min('delta') ?? 0;
+                $optimalUpper += $bio->genetics->max('delta') ?? 0;
             }
         }
 
-        $optimalBlueAgeMin = $chronologicalAge + $optimalDeltaMin;
-        $optimalBlueAgeMax = $chronologicalAge + $optimalDeltaMax;
+        $optimalRangeLower = round($chronAge + $optimalLower, 1);
+        $optimalRangeUpper = round($chronAge + $optimalUpper, 1);
 
         return [
-            'blue_age'            => round($blueAge, 1),
-            'chronological_age'   => $chronologicalAge,
-            'total_delta'         => round($totalDelta, 1),
-            'optimal_blue_age'    => round($optimalBlueAgeMin, 1),
-            'optimal_range'       => round($optimalBlueAgeMin,1) . ' - ' . round($optimalBlueAgeMax,1) . ' years (optimal)',
-            'years_from_optimal'  => round($blueAge - $optimalBlueAgeMin, 1),
-            'biomarker_deltas'    => $biomarkerDeltas,
-            'last_updated'        => now()->format('F d, Y'),
+            'blue_age' => round($blueAge, 1),
+            'chronological_age' => $chronAge,
+            'total_delta' => round($totalDelta, 1),
+            'optimal_blue_age' => round($chronAge + $optimalLower, 1),
+            'optimal_range' => $optimalRangeLower . ' - ' . $optimalRangeUpper . ' years (optimal)',
+            'years_from_optimal' => round($blueAge - ($chronAge + $optimalLower), 1),
+            'biomarker_deltas' => $biomarkerDeltas,
+            'last_updated' => now()->format('F d, Y'),
         ];
     }
 }

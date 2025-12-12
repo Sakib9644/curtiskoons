@@ -307,17 +307,17 @@ class LabReportController extends Controller
             $singleReport->save();
 
             // Store full result for this report
-            $allResults[] = [
-                'blue_age' => $finalBluegrassAge,
-                'last_updated' => $singleReport['test_date'],
 
-            ];
+
+
+
         }
 
         return response()->json([
             'message' => 'All Blue Age Reports Calculated Successfully.',
             'user_id' => auth('api')->id(),
-            'reports' => $allResults
+            'blue_age' => $finalBluegrassAge,
+            'last_updated' => $singleReport['test_date'],
         ]);
     }
 
@@ -391,11 +391,11 @@ class LabReportController extends Controller
         return response()->json([
             'message' => 'All Blue Age Date and Blue Age Retrive Successfully',
             'user_id' => auth('api')->id(),
-            'reports' => $report->map(function($r){
+            'reports' => $report->map(function ($r) {
                 return [
 
-                    'test_date' =>$r->test_date,
-                    'blue_age' =>$r->blue_age,
+                    'test_date' => $r->test_date,
+                    'blue_age' => $r->blue_age,
 
                 ];
             })

@@ -63,12 +63,7 @@ class RegisterController extends Controller
                 'last_activity_at'   => Carbon::now()
             ]);
 
-            // Assign default role 'user'
-            $userRole = Role::where('name', 'user')->first();
-            if ($userRole) {
-                $user->assignRole($userRole);
-            }
-
+       
             // Notify admins
             $notiData = [
                 'user_id' => $user->id,
@@ -76,7 +71,7 @@ class RegisterController extends Controller
                 'body' => 'A new user has registered.'
             ];
 
-         
+
             // Send OTP email
             Mail::to($user->email)->send(new OtpMail($user->otp, $user, 'Verify Your Email Address'));
 

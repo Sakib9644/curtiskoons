@@ -252,7 +252,7 @@ Route::get('bluegrass-age-report', [LabReportController::class, 'calculateAndSto
 Route::get('all/bluegrass-age-report', [LabReportController::class, 'allblueagereports']);           // Get all content
 Route::get('all/bluegrass-age-report', [LabReportController::class, 'allblueagereports']);           // Get all content
 Route::get('all/date-age', [LabReportController::class, 'date']);           // Get all content
-Route::get('webhook', [LabReportController::class, 'webhook']);           // Get all content
+Route::get('webhook', [LabReportController::class, 'webhook']);           
 
 
 

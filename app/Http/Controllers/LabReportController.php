@@ -253,6 +253,7 @@ public function calculateAndStore()
 
             $blue = [];
             $testdate = [];
+             $chronAge  = [];
 
         foreach ($reports as $singleReport) {
 
@@ -308,6 +309,7 @@ public function calculateAndStore()
 
 
 
+            $chronAge[] = $chronAge;
             $blue[] = $finalBluegrassAge;
             $testdate[] = $singleReport['test_date'];
 
@@ -316,6 +318,7 @@ public function calculateAndStore()
         return response()->json([
             'message' => 'All Blue Age Reports Calculated Successfully.',
             'blue' => $blue,
+            'chron_Age=' => $chronAge ,
             'testdate' => $testdate,
 
         ]);

@@ -398,7 +398,7 @@ class LabReportController extends Controller
                 return [
 
                     'test_date' =>$r->test_date,
-                    'test_date' =>$r->blue_age,
+                    'blue_age' =>$r->blue_age,
 
                 ];
             })

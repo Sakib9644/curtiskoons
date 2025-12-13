@@ -329,7 +329,7 @@ public function calculateAndStore()
 
         $user = User::find($id);
 
-        $report = LabReport::select('id', 'test_date')->where('user_id', $user->id)->get();
+        $report = LabReport::select('id', 'test_date')->where('user_id', $user->id)->latest()->get();
         return view('backend.lab-reports.reports', compact('report'));
     }
 

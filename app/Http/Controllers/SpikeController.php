@@ -238,9 +238,7 @@ public function listProviderRecords(Request $request)
 {
     try {
         $user = auth('api')->user();
-        if (!$user || !$user->spike_token) {
-            return response()->json(['success' => false, 'message' => 'User not authenticated with Spike'], 401);
-        }
+        
 
         $fromTimestamp = $request->input('from_timestamp');
         if (!$fromTimestamp) {
